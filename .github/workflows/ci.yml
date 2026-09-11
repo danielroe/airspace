@@ -1,0 +1,103 @@
+name: ci
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  merge_group:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/setup@84cb39b217b10273981911c288cd62326dc7c6d2 # v2
+        with:
+          cache: true
+          install: false
+
+      - name: 📦 Install dependencies
+        run: pnpm install
+
+      - name: 🔠 Lint project
+        run: pnpm lint
+
+      - name: ✂️ Knip project
+        run: pnpm test:knip
+
+      - name: ⚙️ Check package engines
+        run: pnpm test:versions
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/setup@84cb39b217b10273981911c288cd62326dc7c6d2 # v2
+        with:
+          cache: true
+          install: false
+
+      - name: 📦 Install dependencies
+        run: pnpm install
+
+      - name: 🛠 Build project
+        run: pnpm build
+
+      - name: 💪 Test types
+        run: pnpm test:types
+
+      - name: 🧪 Test project
+        run: pnpm test:unit -- --coverage
+
+      - name: 🟩 Coverage
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
+
+
+  examples:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/setup@84cb39b217b10273981911c288cd62326dc7c6d2 # v2
+        with:
+          cache: true
+          install: false
+
+      - name: 📦 Install dependencies
+        run: pnpm install
+
+      - name: 🛰️ Start a local PDS
+        run: |
+          pnpm dev:pds > pds.log 2>&1 &
+          for _ in $(seq 1 60); do
+            curl -sf http://localhost:2583/xrpc/_health && break
+            sleep 1
+          done
+          cat pds.log
+
+      - name: 🧱 Build examples
+        run: pnpm -r --filter './examples/*' build
+
+  docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/setup@84cb39b217b10273981911c288cd62326dc7c6d2 # v2
+        with:
+          cache: true
+          install: false
+
+      - name: 📦 Install dependencies
+        run: pnpm install
+
+      - name: 🛰 Build docs
+        run: pnpm --filter airspace-docs generate

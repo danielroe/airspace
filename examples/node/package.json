@@ -1,0 +1,21 @@
+{
+  "name": "@airspace-examples/node",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env cli.ts list",
+    "cli": "node --env-file-if-exists=.env cli.ts",
+    "build": "tsc --noEmit",
+    "lex:emit": "airspace lexicons emit",
+    "lex:publish": "airspace lexicons publish --identity alice.test --dry-run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "airspace": "workspace:*",
+    "comark": "^0.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.0",
+    "typescript": "6.0.3"
+  }
+}

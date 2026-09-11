@@ -1,0 +1,18 @@
+{
+  "ignore": [
+    "src/lex/**",
+    "test/fixtures/live/**",
+    "demo-pds/**"
+  ],
+  "workspaces": {
+    ".": {
+      "entry": [
+        "scripts/*.ts"
+      ]
+    }
+  },
+  "ignoreWorkspaces": [
+    "examples/*",
+    "docs"
+  ]
+}

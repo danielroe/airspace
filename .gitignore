@@ -1,0 +1,12 @@
+dist
+node_modules
+.types-*
+.nuxt
+.output
+.workmux
+examples/*/lex
+examples/*/.astro
+examples/*/.svelte-kit
+examples/*/build
+.env
+.vercel
