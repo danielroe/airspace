@@ -1,0 +1,29 @@
+---
+import type { GetStaticPaths } from 'astro'
+import { renderHtmlFromDocument } from '@comark/html'
+
+import Layout from '../../lib/Layout.astro'
+import { useAirspace } from '../../lib/airspace.ts'
+
+export const getStaticPaths = (async () => {
+  const airspace = await useAirspace()
+  const all = await airspace.notes.list()
+  return all.map(note => ({ params: { rkey: note.rkey }, props: { rkey: note.rkey } }))
+}) satisfies GetStaticPaths
+
+const airspace = await useAirspace()
+const note = await airspace.notes.get(Astro.params.rkey!)
+
+if (!note)
+  return Astro.rewrite('/404')
+
+const [tag, cover] = await Promise.all([airspace.notes.resolve(note, 'tag'), airspace.blobs.url(note.value.cover)])
+const body = note.meta.markdown ? await renderHtmlFromDocument(note.meta.markdown) : ''
+---
+
+<Layout title={note.value.title}>
+  <h1>{note.value.title}</h1>
+  {tag && <p>tagged {tag.value.name}</p>}
+  {cover && <img src={cover} alt={note.value.title} />}
+  <article set:html={body} />
+</Layout>

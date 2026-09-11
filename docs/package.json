@@ -1,0 +1,24 @@
+{
+  "name": "airspace-docs",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "check:links": "node scripts/check-links.ts",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@comark/vue": "^0.7.0",
+    "@nuxt/fonts": "https://pkg.pr.new/@nuxt/fonts@35924e7",
+    "airspace": "workspace:*",
+    "comark": "^0.7.0",
+    "nitro": "3.0.260903-beta",
+    "nuxt": "npm:nuxt-nightly@5x",
+    "ofetch": "2.0.0-alpha.3",
+    "rangi": "^2.2.0",
+    "vue": "^3.5.0"
+  }
+}

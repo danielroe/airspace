@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" font-family="Instrument Sans, Helvetica, Arial, sans-serif">
+  <rect width="1200" height="630" fill="#f9fafc"/>
+  <g stroke="#d6d9de" stroke-width="1">
+    <path d="M0 120.5 H1200"/>
+    <path d="M0 509.5 H1200"/>
+    <path d="M760.5 120 V510"/>
+  </g>
+  <text x="88" y="86" font-size="44" font-family="Caveat, cursive" font-weight="600" fill="#1659b5">airspace</text>
+  <text x="1112" y="89" font-size="24" text-anchor="end" fill="#575e69">getair.space</text>
+  <path d="M88 236 C 260 196, 380 268, 560 224 S 900 180, 1000 210" fill="none" stroke="#c9ced6" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 14"/>
+  <text x="88" y="330" font-size="86" font-weight="500" font-family="Space Grotesk, Instrument Sans, sans-serif" fill="#161b24" letter-spacing="-3.5">the database you</text>
+  <text x="88" y="422" font-size="86" font-weight="500" font-family="Space Grotesk, Instrument Sans, sans-serif" fill="#161b24" letter-spacing="-3.5">already have.</text>
+  <text x="88" y="478" font-size="30" fill="#575e69">cms, login, file storage and a public API that you own.</text>
+  <g transform="translate(88 546)">
+    <rect width="286" height="48" rx="4" fill="#1659b5"/>
+    <text x="24" y="32" font-size="22" font-family="JetBrains Mono, monospace" fill="#f5f9fe">pnpm add airspace</text>
+  </g>
+  <text x="408" y="578" font-size="22" fill="#575e69">Node 22+</text>
+</svg>

@@ -1,0 +1,20 @@
+---
+interface Props { title: string }
+const { title } = Astro.props
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{title}</title>
+    <style is:global>
+      body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 40rem; line-height: 1.5; }
+      nav { margin-bottom: 2rem; }
+      img { max-width: 100%; height: auto; }
+    </style>
+  </head>
+  <body>
+    <nav><a href="/">notes</a> · <a href="/drafts">drafts</a> · <a href="/profile">profile</a></nav>
+    <slot />
+  </body>
+</html>
