@@ -1,0 +1,146 @@
+{
+  "name": "airspace",
+  "type": "module",
+  "version": "0.1.0",
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "^24.0.0",
+      "onFail": "download"
+    },
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.24.0",
+      "onFail": "download"
+    }
+  },
+  "description": "A fully-typed, atproto-native CMS toolkit, turning your PDS into your content layer.",
+  "author": "Daniel Roe <daniel@roe.dev>",
+  "license": "MIT",
+  "homepage": "https://getair.space",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielroe/airspace.git"
+  },
+  "bugs": {
+    "url": "https://github.com/danielroe/airspace/issues"
+  },
+  "keywords": [
+    "atproto",
+    "bluesky",
+    "cms",
+    "lexicon",
+    "pds",
+    "permissioned-spaces",
+    "typescript"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./cli": "./src/cli.ts",
+    "./lexicon": "./src/lexicon.ts",
+    "./live": "./src/live.ts",
+    "./oauth": "./src/oauth.ts",
+    "./plugins/markdown": "./src/plugins/markdown.ts",
+    "./plugins/timestamps": "./src/plugins/timestamps.ts",
+    "./package.json": "./package.json"
+  },
+  "types": "./dist/index.d.mts",
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.mjs",
+      "./cli": "./dist/cli.mjs",
+      "./lexicon": "./dist/lexicon.mjs",
+      "./live": "./dist/live.mjs",
+      "./oauth": "./dist/oauth.mjs",
+      "./plugins/markdown": "./dist/plugins/markdown.mjs",
+      "./plugins/timestamps": "./dist/plugins/timestamps.mjs",
+      "./package.json": "./package.json"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./dist/*.d.mts",
+        "./dist/index.d.mts"
+      ]
+    }
+  },
+  "bin": {
+    "airspace": "./bin/airspace.mjs"
+  },
+  "files": [
+    "bin",
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "vitest dev",
+    "lint": "eslint . --fix",
+    "prepare": "simple-git-hooks",
+    "prepack": "pnpm lint && pnpm test && pnpm build",
+    "test": "pnpm test:unit && pnpm test:types && pnpm test:knip",
+    "test:unit": "vitest",
+    "test:knip": "knip",
+    "test:versions": "installed-check -d --no-workspaces",
+    "test:types": "tsc --noEmit",
+    "lex:build": "node scripts/build-lex.ts",
+    "size": "node scripts/size.ts",
+    "dev:pds": "node test/pds-serve.mjs"
+  },
+  "peerDependencies": {
+    "@atproto/oauth-client-node": "^0.5.0",
+    "comark": "^0.6.0 || ^0.7.0"
+  },
+  "peerDependenciesMeta": {
+    "@atproto/oauth-client-node": {
+      "optional": true
+    },
+    "comark": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@atproto/lex-client": "^0.3.5",
+    "@atproto/lex-data": "^0.1.7",
+    "@atproto/lex-json": "^0.1.6",
+    "@atproto/lex-password-session": "^0.2.2",
+    "@atproto/lex-schema": "^0.2.6",
+    "image-meta": "^0.2.2"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "9.3.0",
+    "@arethetypeswrong/core": "0.18.5",
+    "@atproto/dev-env": "0.0.0-spaces-alpha-20260910230440",
+    "@atproto/lex": "^0.3.8",
+    "@atproto/lex-document": "0.1.10",
+    "@atproto/oauth-client-node": "^0.5.4",
+    "@types/node": "^26.5.0",
+    "@types/ws": "^8.18.1",
+    "@vitest/coverage-v8": "5.0.0",
+    "comark": "^0.6.2",
+    "esbuild": "0.28.2",
+    "eslint": "10.10.0",
+    "installed-check": "11.0.0",
+    "knip": "6.34.0",
+    "nano-staged": "1.0.2",
+    "pkg-pr-new": "0.0.88",
+    "publint": "0.3.24",
+    "simple-git-hooks": "2.14.0",
+    "tsdown": "0.22.14",
+    "typescript": "6.0.3",
+    "vitest": "5.0.0",
+    "ws": "^8.21.3"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm nano-staged"
+  },
+  "nano-staged": {
+    "*.{js,ts,mjs,cjs,json,.*rc}": [
+      "pnpm eslint --fix"
+    ]
+  }
+}

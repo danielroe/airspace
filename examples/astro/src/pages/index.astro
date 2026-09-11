@@ -1,0 +1,20 @@
+---
+import Layout from '../lib/Layout.astro'
+import { useAirspace } from '../lib/airspace.ts'
+
+const airspace = await useAirspace()
+const [me, all] = await Promise.all([airspace.profile.get(), airspace.notes.list({ with: ['tag'] })])
+---
+
+<Layout title={me?.value.displayName ?? 'Notes'}>
+  <h1>{me?.value.displayName ?? 'Notes'}</h1>
+  {me?.value.bio && <p>{me.value.bio}</p>}
+  <ul>
+    {all.map(note => (
+      <li>
+        <a href={`/notes/${note.rkey}`}>{note.value.title}</a>
+        {note.related.tag && <em> {note.related.tag.value.name}</em>}
+      </li>
+    ))}
+  </ul>
+</Layout>

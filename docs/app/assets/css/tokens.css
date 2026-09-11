@@ -1,0 +1,102 @@
+:root {
+  color-scheme: light dark;
+
+  --color-paper: oklch(98.6% 0.003 260);
+  --color-paper-2: oklch(96.6% 0.005 260);
+  --color-ink: oklch(22% 0.02 262);
+  --color-ink-2: oklch(48% 0.02 262);
+  --color-rule: oklch(88.5% 0.008 262);
+  --color-rule-strong: oklch(78% 0.012 262);
+  --color-accent: oklch(48% 0.16 258);
+  --color-accent-ink: oklch(98% 0.008 258);
+  --color-accent-wash: oklch(94.5% 0.03 258);
+  --color-focus: oklch(52% 0.19 258);
+
+  /* syntax highlighting, keyed to the palette above */
+  --shj-bg: var(--color-paper-2);
+  --shj-fg: var(--color-ink);
+  --shj-cmnt: var(--color-ink-2);
+  --shj-var: var(--color-ink);
+  --shj-oper: var(--color-ink-2);
+  --shj-bracket: var(--color-ink-2);
+  --shj-kwd: oklch(48% 0.16 258);
+  --shj-func: oklch(46% 0.15 300);
+  --shj-class: oklch(46% 0.12 220);
+  --shj-type: oklch(46% 0.12 220);
+  --shj-str: oklch(47% 0.11 155);
+  --shj-section: oklch(47% 0.11 155);
+  --shj-num: oklch(50% 0.13 45);
+  --shj-bool: oklch(50% 0.13 45);
+  --shj-esc: oklch(50% 0.13 45);
+  --shj-insert: oklch(47% 0.11 155);
+  --shj-deleted: oklch(50% 0.16 25);
+  --shj-err: oklch(50% 0.16 25);
+
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Instrument Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-wordmark: 'Caveat', 'Segoe Script', cursive;
+
+  --text-xs: 0.8125rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --text-display: clamp(2.75rem, 6.5vw, 4.75rem);
+
+  --space-3xs: 0.25rem;
+  --space-2xs: 0.5rem;
+  --space-xs: 0.75rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+  --space-2xl: 4rem;
+  --space-3xl: 6rem;
+
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+
+  --rule: 1px solid var(--color-rule);
+  --rule-strong: 1px solid var(--color-rule-strong);
+
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --dur-fast: 110ms;
+  --dur-base: 170ms;
+
+  --measure: 66ch;
+  --measure-wide: 80ch;
+  --wide: 74rem;
+  --gutter: clamp(1.25rem, 5vw, 4rem);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-paper: oklch(17.5% 0.014 262);
+    --color-paper-2: oklch(21.5% 0.017 262);
+    --color-ink: oklch(93% 0.008 262);
+    --color-ink-2: oklch(71% 0.014 262);
+    --color-rule: oklch(31% 0.018 262);
+    --color-rule-strong: oklch(41% 0.022 262);
+    --color-accent: oklch(78% 0.13 250);
+    --color-accent-ink: oklch(18% 0.03 258);
+    --color-accent-wash: oklch(28% 0.045 255);
+    --color-focus: oklch(78% 0.13 250);
+
+    --shj-kwd: oklch(80% 0.11 258);
+    --shj-func: oklch(80% 0.11 300);
+    --shj-class: oklch(82% 0.09 220);
+    --shj-type: oklch(82% 0.09 220);
+    --shj-str: oklch(82% 0.1 155);
+    --shj-section: oklch(82% 0.1 155);
+    --shj-num: oklch(83% 0.1 60);
+    --shj-bool: oklch(83% 0.1 60);
+    --shj-esc: oklch(83% 0.1 60);
+    --shj-insert: oklch(82% 0.1 155);
+    --shj-deleted: oklch(75% 0.14 25);
+    --shj-err: oklch(75% 0.14 25);
+  }
+}
