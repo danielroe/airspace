@@ -1,0 +1,50 @@
+---
+import { actions } from 'astro:actions'
+
+import Layout from '../lib/Layout.astro'
+import { useAirspace } from '../lib/airspace.ts'
+
+export const prerender = false
+
+const drafted = Astro.getActionResult(actions.draft)
+const published = Astro.getActionResult(actions.publish)
+
+const airspace = await useAirspace()
+const [drafts, live, tags] = await Promise.all([
+  airspace.workspace.notes.list(),
+  airspace.workspace.notes.published(),
+  airspace.workspace.tags.list(),
+])
+---
+
+<Layout title="Drafts">
+  <h1>Drafts</h1>
+  {drafted?.error && <p>Draft failed: {drafted.error.message}</p>}
+  {published?.data && <p>Published <code>{published.data.uri}</code></p>}
+
+  <form method="post" action={actions.draft} enctype="multipart/form-data">
+    <p><input name="title" placeholder="Title" required /></p>
+    <p><textarea name="body" placeholder="# Markdown body"></textarea></p>
+    <p>
+      <select name="tag">
+        <option value="">no tag</option>
+        {tags.map(tag => <option value={tag.rkey}>{tag.value.name}</option>)}
+      </select>
+      <input name="newTag" placeholder="or a new tag" />
+    </p>
+    <p><input type="file" name="cover" accept="image/*" /></p>
+    <button type="submit">Create draft</button>
+  </form>
+
+  {drafts.map(draft => (
+    <article>
+      <h2>{draft.value.title}</h2>
+      {live.includes(draft.rkey) ? <p>published</p> : (
+        <form method="post" action={actions.publish}>
+          <input type="hidden" name="rkey" value={draft.rkey} />
+          <button type="submit">Publish</button>
+        </form>
+      )}
+    </article>
+  ))}
+</Layout>

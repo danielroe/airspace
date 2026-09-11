@@ -1,0 +1,115 @@
+blockExoticSubdeps: false
+
+minimumReleaseAgeExclude:
+  - '@comark/vue@0.7.0'
+  - comark@0.7.0
+  - '@atproto-labs/did-resolver@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto-labs/fetch-node@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto-labs/handle-resolver-node@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto-labs/handle-resolver@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto-labs/opentelemetry-node@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto-labs/xrpc-utils@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/api@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/aws@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/bsky@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/car@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/common-web@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/common@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/crypto@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/dev-env@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/did@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/identity@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex-builder@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex-cbor@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex-client@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex-data@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex-document@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex-installer@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex-json@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex-password-session@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex-resolver@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex-schema@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lexicon@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/oauth-provider-api@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/oauth-provider-ui@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/oauth-provider@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/oauth-scopes@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/oauth-types@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/ozone@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/pds@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/repo@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/space@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/sync@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/syntax@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/xrpc-server@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/xrpc@0.0.0-spaces-alpha-20260910230440'
+
+shellEmulator: true
+
+trustPolicy: no-downgrade
+
+# Pre-provenance transitive deps of the dev-env alpha and of the framework examples.
+trustPolicyExclude:
+  - undici@5.29.0
+  - '@noble/secp256k1@1.7.2'
+  - semver@6.3.1
+  - chokidar@4.0.3
+
+packages:
+  - examples/*
+  - docs
+
+# The dev-env alpha's "^0.0.0-spaces-alpha-*" ranges also match a broken @atproto/lex@0.0.0 on npm.
+overrides:
+  '@atproto-labs/did-resolver@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto-labs/fetch-node@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto-labs/handle-resolver-node@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto-labs/handle-resolver@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto-labs/opentelemetry-node@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto-labs/xrpc-utils@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/api@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/aws@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/bsky@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/car@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/common-web@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/common@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/crypto@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/dev-env@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/did@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/identity@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/lex-builder@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/lex-cbor@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/lex-client@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/lex-data@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/lex-document@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/lex-installer@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/lex-json@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/lex-password-session@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/lex-resolver@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/lex-schema@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/lex@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/lexicon@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/oauth-provider-api@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/oauth-provider-ui@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/oauth-provider@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/oauth-scopes@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/oauth-types@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/ozone@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/pds@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/repo@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/space@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/sync@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/syntax@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/xrpc-server@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  '@atproto/xrpc@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
+  airspace: 'workspace:*'
+
+allowBuilds:
+  better-sqlite3: true
+  cbor-extract: false
+  core-js: false
+  esbuild: false
+  protobufjs: false
+  sharp: true
+  simple-git-hooks: true

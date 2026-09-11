@@ -1,0 +1,22 @@
+---
+import { actions } from 'astro:actions'
+
+import Layout from '../lib/Layout.astro'
+import { useAirspace } from '../lib/airspace.ts'
+
+export const prerender = false
+
+const saved = Astro.getActionResult(actions.profile)
+const airspace = await useAirspace()
+const me = await airspace.profile.get()
+---
+
+<Layout title="Profile">
+  <h1>Profile</h1>
+  {saved?.data && <p>Saved</p>}
+  <form method="post" action={actions.profile}>
+    <p><input name="displayName" value={me?.value.displayName ?? ''} placeholder="Display name" required /></p>
+    <p><textarea name="bio" placeholder="Bio">{me?.value.bio ?? ''}</textarea></p>
+    <button type="submit">Save</button>
+  </form>
+</Layout>
