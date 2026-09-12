@@ -125,7 +125,7 @@
     "esbuild": "0.28.2",
     "eslint": "10.10.0",
     "installed-check": "11.0.0",
-    "knip": "6.34.0",
+    "knip": "6.35.1",
     "nano-staged": "1.0.2",
     "pkg-pr-new": "0.0.88",
     "publint": "0.3.24",
