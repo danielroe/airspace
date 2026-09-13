@@ -132,11 +132,11 @@ useSeoMeta({
 }
 
 s {
-    color: var(--color-rule-strong);
+  color: var(--color-ink-2);
 }
 
 s + span {
-    color: var(--color-ink);
+  color: var(--color-ink);
 }
 
 .hero {
