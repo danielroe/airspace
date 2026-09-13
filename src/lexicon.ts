@@ -9,7 +9,7 @@ import { AirspaceError } from './errors.ts'
 import { buildModel, formattedString, openUnion } from './field.ts'
 import { buildPermissionSet, isPermissionSet, isPermissionSetSpec, permissions } from './permissions.ts'
 
-export type { AnyStringFormat, Field, FormattedString, Model, OpenUnionSchema, RecordSpec, SpaceSpec, TextOptions, UnionField, UnknownMember } from './field.ts'
+export type { AnyField, AnyStringFormat, Field, FormattedString, Model, OpenUnionSchema, RecordSpec, SpaceSpec, TextOptions, UnionField, UnknownMember } from './field.ts'
 export { field, space } from './field.ts'
 export type { LexiconPermission, PermissionSetDeclaration, PermissionSetOptions, RepoAction } from './permissions.ts'
 export { permissions } from './permissions.ts'
