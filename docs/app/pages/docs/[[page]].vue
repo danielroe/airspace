@@ -49,17 +49,25 @@ useHead({
   const headings = links.map(a => document.getElementById(a.hash.slice(1))).filter(Boolean)
   if (!headings.length || !('IntersectionObserver' in window)) return
   const visible = new Set()
+  const passed = new Set()
+  let current = null
   const update = () => {
     let active = headings.find(h => visible.has(h))
-    if (!active) for (const h of headings) if (h.getBoundingClientRect().top < 120) active = h
+    if (!active) for (const h of headings) if (passed.has(h)) active = h
+    if (active === current) return
+    current = active
     for (const a of links) a.classList.toggle('active', !!active && a.hash === '#' + active.id)
   }
   const observer = new IntersectionObserver((entries) => {
-    for (const entry of entries) entry.isIntersecting ? visible.add(entry.target) : visible.delete(entry.target)
+    for (const entry of entries) {
+      // geometry from the entry, so the callback never forces a synchronous layout
+      const above = entry.boundingClientRect.top < (entry.rootBounds ? entry.rootBounds.top : 0)
+      entry.isIntersecting ? visible.add(entry.target) : visible.delete(entry.target)
+      !entry.isIntersecting && above ? passed.add(entry.target) : passed.delete(entry.target)
+    }
     update()
   }, { rootMargin: '-80px 0px -65% 0px' })
   for (const heading of headings) observer.observe(heading)
-  update()
 })()`,
   }],
 })
