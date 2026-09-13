@@ -176,6 +176,18 @@ describe('toLexiconJson', () => {
     expect(toLexiconJson(model)[0]!.defs.thing).toEqual({ type: 'object', required: ['x'], properties: { x: { type: 'string' } } })
   })
 
+  it('refuses to invent a def for a foreign ref target it cannot name, unless given the nsid', () => {
+    const status = lex.string({ knownValues: ['community.lexicon.app.defs#preview'] })
+    const bad = defineLexicons('dev.example.foreign', { project: { status: field.raw(l.ref(() => status)) } })
+    expect(() => toLexiconJson(bad)).toThrow(/is a "string" def that is not in this file/)
+
+    const good = defineLexicons('dev.example.foreign', {
+      project: { status: field.raw(l.ref(() => status, { nsid: 'community.lexicon.app.defs#status' })) },
+    })
+    expect((toLexiconJson(good)[0]!.defs.main as any).record.properties.status).toEqual({ type: 'ref', ref: 'community.lexicon.app.defs#status' })
+    expect(Object.keys(toLexiconJson(good)[0]!.defs)).toEqual(['main'])
+  })
+
   it('loads a defineLexicons module the way the CLI does', async () => {
     const dir = await mkdtemp(join(resolve(import.meta.dirname), '.lexicons-'))
     await writeFile(join(dir, 'lexicons.ts'), [

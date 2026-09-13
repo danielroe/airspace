@@ -112,7 +112,7 @@ export default defineLexicons({
 
 ## sharing existing schemas
 
-Shared shapes such as `community.lexicon.app.defs#image` and `com.atproto.repo.strongRef` come from `lex install <nsid>` (in `@atproto/lex`, a devDependency), which vendors the schema and pins its CID; `lex build` then generates TypeScript. Reference the output directly: `l.ref(() => AppDefs.image)`.
+Shared shapes such as `community.lexicon.app.defs#image` and `com.atproto.repo.strongRef` come from `lex install <nsid>` (in `@atproto/lex`, a devDependency), which vendors the schema and pins its CID; `lex build` then generates TypeScript. Reference the output directly: `l.ref(() => AppDefs.image)`. A generated def that isn't a typed object, such as a bare string with `knownValues`, carries no `$type` for the emitter to recover its NSID from, so name it: `l.ref(() => AppDefs.status, { nsid: 'community.lexicon.app.defs#status' })`.
 
 `lex install` writes the schema under `lexicons/` and records its URI and CID in `lexicons.json`, dependencies included. Commit both: `lex install --ci` re-resolves every pinned NSID and exits non-zero if a CID has moved, which is the check to run in CI. An NSID only resolves if its authority publishes a `_lexicon.<domain>` DNS TXT record and a `com.atproto.lexicon.schema` record for it, so a schema whose author has not done that (`com.whtwnd.blog.entry`, at the time of writing) has to be vendored by hand from wherever they keep it.
 

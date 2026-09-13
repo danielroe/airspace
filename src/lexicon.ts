@@ -4,7 +4,7 @@ import type { AnyStringFormat, FormattedString, Model, OpenUnionSchema, RecordSp
 import type { SpaceDeclaration } from './model.ts'
 import type { PermissionSetDeclaration, PermissionSetOptions, PermissionSetSpec } from './permissions.ts'
 import { l as base, Schema } from '@atproto/lex-schema'
-import { describe, descriptionOf, emittedFor, fresh } from './describe.ts'
+import { describe, descriptionOf, emitAs, emittedFor, fresh } from './describe.ts'
 import { AirspaceError } from './errors.ts'
 import { buildModel, formattedString, openUnion } from './field.ts'
 import { buildPermissionSet, isPermissionSet, isPermissionSetSpec, permissions } from './permissions.ts'
@@ -60,8 +60,8 @@ export const l: {
   unknown: (options?: Described<object>) => LexMapSchema
   array: <const T extends Validator>(items: T, options?: Described<ArraySchemaOptions>) => ArraySchema<T>
   object: <const T extends ObjectSchemaShape>(shape: T, options?: Described<object>) => ObjectSchema<T>
-  /** Reference a def from this file, from `lex build` output, or any schema carrying a `$type`. */
-  ref: <const T extends Validator>(get: () => T, options?: Described<object>) => RefSchema<T>
+  /** Reference a def from this file, from `lex build` output, or any schema carrying a `$type`. One carrying none, such as a foreign `knownValues` string, needs its `nsid`. */
+  ref: <const T extends Validator>(get: () => T, options?: Described<{ nsid?: string }>) => RefSchema<T>
   /** A union of typed object defs (`l.typedObject` or `lex build` output). */
   union: <const R extends readonly TypedGetter[], const Closed extends boolean = false>(refs: R, options?: Described<{ closed?: Closed }>) => TypedUnionSchema<UnionRefs<R>, Closed>
   /** A union that keeps the members it does not know. */
@@ -102,7 +102,10 @@ export const l: {
     return describe(base.array(items, rest), description)
   },
   object: (shape, options) => describe(base.object(shape), options?.description),
-  ref: (get, options) => describe(base.ref(get), options?.description),
+  ref: (get, options) => {
+    const schema = describe(base.ref(get), options?.description)
+    return options?.nsid ? emitAs(schema, { ref: options.nsid }) : schema
+  },
   union: (refs, options) => describe(base.typedUnion(refs.map(get => base.typedRef(get)), options?.closed ?? false), options?.description) as TypedUnionSchema<any, any>,
   openUnion: (refs, options) => describe(openUnion(refs), options?.description) as OpenUnionSchema<any>,
   enum: (values, options) => describe(base.enum(values), options?.description),
@@ -341,8 +344,12 @@ function property(node: Validator, where: string, ctx: Emit): Record<string, unk
     case 'array':
       return withDescription(schema, { type: 'array', items: property(schema.validator, where, ctx), ...schema.options })
     case 'ref': {
-      const target = schema.unwrap() as Validator & object
-      return withDescription(schema, { type: 'ref', ref: ctx.refName(target) ?? ctx.hoist(target, where) })
+      const target = schema.unwrap() as Validator & { type: string }
+      const named = (emittedFor(schema)?.ref as string | undefined) ?? ctx.refName(target)
+      // Only an object can be hoisted, since lexicon JSON has no inline object type.
+      if (!named && target.type !== 'object')
+        throw new AirspaceError(`${where}: ref target is a "${target.type}" def that is not in this file and carries no $type; pass its NSID as \`l.ref(get, { nsid: '...' })\``)
+      return withDescription(schema, { type: 'ref', ref: named ?? ctx.hoist(target, where) })
     }
     case 'typedRef':
       return { type: 'ref', ref: requireRefName(schema.validator, where, ctx) }
