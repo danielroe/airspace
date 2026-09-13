@@ -25,7 +25,7 @@ export default defineLexicons('dev.roe', {
 })
 ```
 
-`key` defaults to `tid`; `key: 'self'` makes the record a singleton. `key` and `description` are the record's own only when they hold a record key and a string; a field under either name is just a field. `field.ref('projectCategory')` is a `com.atproto.repo.strongRef`, and a record in another namespace takes its full NSID. The other fields are `text`, `markdown`, `number`, `boolean`, `datetime`, `url`, `enum`, `list`, `object`, `union`, `blob` and `image`, each with a default maximum length or size, plus `field.raw(...)` for anything they don't cover.
+`key` defaults to `tid`; `key: 'self'` makes the record a singleton. `key` and `description` are the record's own only when they hold a record key and a string; a field under either name is just a field. To give a record both a `description` field and a description of its own, write it as `record(fields, { description })`. `field.ref('projectCategory')` is a `com.atproto.repo.strongRef`, and a record in another namespace takes its full NSID. The other fields are `text`, `markdown`, `number`, `boolean`, `datetime`, `url`, `enum`, `list`, `object`, `union`, `blob` and `image`, each with a default maximum length or size, plus `field.raw(...)` for anything they don't cover.
 
 `field.text({ format })` takes any lexicon string format. `@atproto/lex-schema` validates `datetime`, `uri`, `did`, `handle`, `nsid`, `tid`, `record-key`, `at-uri`, `at-identifier`, `cid` and `language`; anything else, such as `duration`, is emitted to the JSON and validated as a plain string.
 

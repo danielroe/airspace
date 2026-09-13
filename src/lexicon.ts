@@ -1,6 +1,6 @@
 import type { LexMap } from '@atproto/lex-data'
 import type { $Type, ArraySchema, ArraySchemaOptions, BlobSchema, BlobSchemaOptions, BooleanSchema, BytesSchema, BytesSchemaOptions, CidSchema, EnumSchema, IntegerSchema, IntegerSchemaOptions, LexiconRecordKey, LexMapSchema, LiteralSchema, NsidString, ObjectSchema, ObjectSchemaShape, RecordSchema, RefSchema, StringSchemaOptions, TokenSchema, TypedUnionSchema, Validator } from '@atproto/lex-schema'
-import type { AnyStringFormat, FormattedString, Model, OpenUnionSchema, RecordSpec, SpaceSpec, TypedGetter, UnionRefs } from './field.ts'
+import type { AnyStringFormat, FormattedString, Model, ModelSpec, OpenUnionSchema, TypedGetter, UnionRefs } from './field.ts'
 import type { SpaceDeclaration } from './model.ts'
 import type { PermissionSetDeclaration, PermissionSetOptions, PermissionSetSpec } from './permissions.ts'
 import { l as base, Schema } from '@atproto/lex-schema'
@@ -9,8 +9,8 @@ import { AirspaceError } from './errors.ts'
 import { buildModel, formattedString, openUnion } from './field.ts'
 import { buildPermissionSet, isPermissionSet, isPermissionSetSpec, permissions } from './permissions.ts'
 
-export type { AnyField, AnyStringFormat, Field, FormattedString, Model, OpenUnionSchema, RecordSpec, SpaceSpec, TextOptions, UnionField, UnknownMember } from './field.ts'
-export { field, space } from './field.ts'
+export type { AnyField, AnyStringFormat, Field, FormattedString, Model, OpenUnionSchema, RecordFieldsSpec, RecordSpec, SpaceSpec, TextOptions, UnionField, UnknownMember } from './field.ts'
+export { field, record, space } from './field.ts'
 export type { LexiconPermission, PermissionSetDeclaration, PermissionSetOptions, RepoAction } from './permissions.ts'
 export { permissions } from './permissions.ts'
 export type { Infer, InferInput } from '@atproto/lex-schema'
@@ -153,10 +153,10 @@ export function defineLexicons<const M extends Record<string, Entry>>(lexicons: 
  * A model under one namespace, keyed by short name: `<namespace>.<name>` is the
  * NSID, values are `field.*` maps or `space()`, and `key` defaults to `tid`.
  */
-export function defineLexicons<const N extends AuthorityString, const M extends Record<string, RecordSpec | SpaceSpec | PermissionSetSpec>>(namespace: N, model: M): Model<N, M>
+export function defineLexicons<const N extends AuthorityString, const M extends Record<string, ModelSpec>>(namespace: N, model: M): Model<N, M>
 export function defineLexicons(a: unknown, b?: unknown): unknown {
   return typeof a === 'string'
-    ? buildModel(a, b as Record<string, RecordSpec | SpaceSpec | PermissionSetSpec>)
+    ? buildModel(a, b as Record<string, ModelSpec>)
     : defineNsidLexicons(a as Record<string, Entry>)
 }
 

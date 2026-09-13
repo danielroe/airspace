@@ -221,17 +221,41 @@ export function space<const C extends readonly string[], const K extends Friendl
 
 export type RecordSpec = { key?: FriendlyKey | AnyField, description?: string | AnyField } & { [name: string]: AnyField | string | undefined }
 
+export interface RecordFieldsSpec<F extends Record<string, AnyField> = Record<string, AnyField>, K extends FriendlyKey = FriendlyKey> {
+  readonly type: 'record-fields'
+  readonly fields: F
+  readonly key: K
+  readonly description?: string
+}
+
+/**
+ * A record whose metadata sits beside its fields, for a model with a field
+ * named `key` or `description` alongside a record key or description of its own.
+ */
+export function record<const F extends Record<string, AnyField>, const K extends FriendlyKey = 'tid'>(
+  fields: F,
+  options: { key?: K, description?: string } = {},
+): RecordFieldsSpec<F, ResolvedKey<K>> {
+  const { key = 'tid' as K, ...rest } = options
+  return { type: 'record-fields', fields, key: resolveKey(key) as ResolvedKey<K>, ...rest }
+}
+
+export type ModelSpec = RecordSpec | RecordFieldsSpec | SpaceSpec | PermissionSetSpec
+
 type FieldsOf<S> = { [K in keyof S as K extends 'key' | 'description' ? (S[K] extends string ? never : K) : K]: S[K] }
 type KeyOf<S> = S extends { key: infer K } ? ResolvedKey<K> : 'tid'
 type ShapeOf<S> = Shape<FieldsOf<S>>
 
 // `ObjectSchema<S>` only satisfies `RecordSchema` once `S` is concrete, so the constraint goes through `infer`.
-type Built<N extends string, K extends string, S>
-  = S extends SpaceSpec<any, infer SK> ? SpaceDeclaration<`${N}.${K}` & NsidString, SK>
-    : S extends PermissionSetSpec ? PermissionSetDeclaration<`${N}.${K}` & NsidString>
-      : ObjectSchema<Extract<ShapeOf<S>, ObjectSchemaShape>> extends infer O extends Validator<LexMap>
-        ? RecordSchema<KeyOf<S> & LexiconRecordKey, `${N}.${K}` & NsidString, O>
-        : never
+type BuiltRecord<N extends NsidString, S, K> = ObjectSchema<Extract<S, ObjectSchemaShape>> extends infer O extends Validator<LexMap>
+  ? RecordSchema<K & LexiconRecordKey, N, O>
+  : never
+
+type Built<N extends string, K extends string, S, Nsid extends NsidString = `${N}.${K}` & NsidString>
+  = S extends SpaceSpec<any, infer SK> ? SpaceDeclaration<Nsid, SK>
+    : S extends PermissionSetSpec ? PermissionSetDeclaration<Nsid>
+      : S extends RecordFieldsSpec<infer F, infer RK> ? BuiltRecord<Nsid, Shape<F>, RK>
+        : BuiltRecord<Nsid, ShapeOf<S>, KeyOf<S>>
 
 /** The runtime schemas for a `defineLexicons(namespace, model)` model, keyed by short name. */
 export type Model<N extends string, M> = { [K in keyof M & string]: Built<N, K, M[K]> }
@@ -261,9 +285,11 @@ function splitRecordSpec(nsid: string, spec: RecordSpec): { fields: Record<strin
   return { fields, key, description }
 }
 
+const isRecordFieldsSpec = (spec: unknown): spec is RecordFieldsSpec => !!spec && typeof spec === 'object' && (spec as RecordFieldsSpec).type === 'record-fields'
+
 const isSpaceSpec = (spec: unknown): spec is SpaceSpec => !!spec && typeof spec === 'object' && (spec as SpaceSpec).type === 'space'
 
-export function buildModel(namespace: string, model: Record<string, RecordSpec | SpaceSpec | PermissionSetSpec>): Record<string, unknown> {
+export function buildModel(namespace: string, model: Record<string, ModelSpec>): Record<string, unknown> {
   const nsidOf = (name: string): string => name.includes('.') ? name : `${namespace}.${name}`
   const known = new Set(Object.keys(model))
   const out: Record<string, unknown> = {}
@@ -291,7 +317,7 @@ export function buildModel(namespace: string, model: Record<string, RecordSpec |
       } satisfies SpaceDeclaration
       continue
     }
-    const { fields, key, description } = splitRecordSpec(nsid, spec)
+    const { fields, key, description } = isRecordFieldsSpec(spec) ? spec : splitRecordSpec(nsid, spec)
     for (const target of refsOf(fields)) {
       if (!target.includes('.') && !known.has(target))
         throw new AirspaceError(`${nsid}: ref to "${target}", which is not in this model; pass a full NSID for a record elsewhere`)

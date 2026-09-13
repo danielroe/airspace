@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path'
 import { lexiconDocumentSchema, LexiconIterableIndexer, LexiconSchemaBuilder } from '@atproto/lex-document'
 import { l as lex } from '@atproto/lex-schema'
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import { defineLexicons, field, l, permissions, space, toLexiconJson } from '../src/lexicon.ts'
+import { defineLexicons, field, l, permissions, record, space, toLexiconJson } from '../src/lexicon.ts'
 import { loadLexicons } from '../src/publish.ts'
 import notes from './fixtures/lexicons.ts'
 
@@ -339,6 +339,33 @@ describe('defineLexicons(namespace, model)', () => {
     })
     expect(byNsid['dev.example.docs.page']!.defs.main).toMatchObject({ type: 'record', key: 'literal:self', description: 'A page.' })
     for (const doc of Object.values(byNsid)) lexiconDocumentSchema.parse(doc)
+  })
+
+  it('takes a record description alongside a field of the same name', () => {
+    const model = defineLexicons('dev.roe', {
+      project: record({
+        description: field.text({ max: 2500 }).optional(),
+        name: field.text(),
+      }, { key: 'self', description: 'A project on the /projects page.' }),
+    })
+    expectTypeOf<Infer<typeof model.project>['description']>().toEqualTypeOf<string | undefined>()
+    expectTypeOf(model.project.key).toEqualTypeOf<'literal:self'>()
+
+    const doc = toLexiconJson(model)[0]!
+    expect(doc.defs.main).toEqual({
+      type: 'record',
+      key: 'literal:self',
+      description: 'A project on the /projects page.',
+      record: {
+        type: 'object',
+        required: ['name'],
+        properties: {
+          description: { type: 'string', maxGraphemes: 2500, maxLength: 25_000 },
+          name: { type: 'string', maxGraphemes: 1000, maxLength: 10_000 },
+        },
+      },
+    })
+    lexiconDocumentSchema.parse(doc)
   })
 
   it('takes an authority of any length as the namespace', () => {
