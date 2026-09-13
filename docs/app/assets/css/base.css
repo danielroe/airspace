@@ -71,8 +71,10 @@ a {
 }
 
 .wordmark {
-  position: relative;
-  display: inline-block;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
+  isolation: isolate;
   font-family: var(--font-wordmark);
   font-size: 1.35rem;
   font-weight: 500;
@@ -81,18 +83,27 @@ a {
   text-decoration: none;
 }
 
+.wordmark span {
+  position: relative;
+  display: inline-block;
+}
+
 .wordmark .contrail {
   position: absolute;
-  left: -8%;
-  width: 116%;
-  top: 58%;
-  height: 70%;
+  z-index: -1;
+  left: -4%;
+  width: calc(104% + 0.45em);
+  top: 52%;
+  height: 46%;
   color: var(--color-rule-strong);
   pointer-events: none;
 }
 
-.wordmark span {
-  position: relative;
+.wordmark .plane {
+  height: 0.85em;
+  width: auto;
+  color: var(--color-accent);
+  pointer-events: none;
 }
 
 .masthead nav {
@@ -182,16 +193,6 @@ main h2 {
 
 .button:active {
   transform: translateY(1px);
-}
-
-.badge {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--color-accent);
-  border: 1px solid var(--color-rule-strong);
-  border-radius: var(--radius-xs);
-  padding: 0.1rem 0.4rem;
-  white-space: nowrap;
 }
 
 code {

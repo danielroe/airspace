@@ -20,5 +20,8 @@
     "ofetch": "2.0.0-alpha.3",
     "rangi": "^2.2.0",
     "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "subset-font": "^2.4.0"
   }
 }

@@ -83,20 +83,20 @@ useSeoMeta({
       <p>airspace manages any collection you have a lexicon for, not only the ones you wrote.</p>
       <ul>
         <li>
-          <code>com.whtwnd.blog.entry</code>
+          <a href="https://whtwnd.com"><code>com.whtwnd.blog.entry</code></a>
           <span>WhiteWind posts, drafted in a space and published to your public repo.</span>
         </li>
         <li>
-          <code>site.standard.*</code>
+          <a href="https://standard.site"><code>site.standard.*</code></a>
           <span>Publications and documents, read from a live repo.</span>
         </li>
         <li>
-          <code>community.lexicon.calendar.*</code>
+          <a href="https://github.com/lexicon-community/lexicon"><code>community.lexicon.calendar.*</code></a>
           <span>Events and RSVPs, joined across two accounts.</span>
         </li>
         <li>
           <code>your.own.lexicon</code>
-          <span>Written with <code>defineLexicons</code>, or brought in as JSON.</span>
+          <span>Written with <NuxtLink to="/docs/model"><code>defineLexicons</code></NuxtLink>, or brought in as JSON.</span>
         </li>
       </ul>
       <p class="note">
@@ -269,11 +269,6 @@ s + span {
 .strip .note {
   margin-top: var(--space-sm);
   font-size: var(--text-sm);
-}
-
-.close .badge {
-  margin-inline-end: var(--space-2xs);
-  vertical-align: 0.1em;
 }
 
 @media (min-width: 52rem) {
