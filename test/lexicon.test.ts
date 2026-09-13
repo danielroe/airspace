@@ -341,6 +341,13 @@ describe('defineLexicons(namespace, model)', () => {
     for (const doc of Object.values(byNsid)) lexiconDocumentSchema.parse(doc)
   })
 
+  it('takes an authority of any length as the namespace', () => {
+    const model = defineLexicons('dev.roe', { note: { title: field.text() } })
+    expectTypeOf(model.note.$type).toEqualTypeOf<'dev.roe.note'>()
+    expect(model.note.$type).toBe('dev.roe.note')
+    expect(toLexiconJson(model)[0]!.id).toBe('dev.roe.note')
+  })
+
   it('rejects a key that is not a record key', () => {
     // @ts-expect-error not a record key
     expect(() => defineLexicons('dev.example.docs', { page: { key: 'slug', title: field.text() } })).toThrow(/"slug" is not a record key/)

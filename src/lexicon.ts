@@ -136,6 +136,8 @@ export type Lexicons<M> = {
 
 type NsidKeys<M> = { [N in keyof M]: N extends NsidString ? M[N] : never }
 
+type AuthorityString = `${string}.${string}`
+
 const marker = (def: unknown): def is { type: string } => !!def && typeof def === 'object' && !(def instanceof Schema) && typeof (def as { type?: unknown }).type === 'string'
 const isRecordDef = (def: unknown): def is RecordDef => marker(def) && def.type === 'record'
 const isSpaceDef = (def: unknown): def is SpaceDef => marker(def) && def.type === 'space'
@@ -151,7 +153,7 @@ export function defineLexicons<const M extends Record<string, Entry>>(lexicons: 
  * A model under one namespace, keyed by short name: `<namespace>.<name>` is the
  * NSID, values are `field.*` maps or `space()`, and `key` defaults to `tid`.
  */
-export function defineLexicons<const N extends NsidString, const M extends Record<string, RecordSpec | SpaceSpec | PermissionSetSpec>>(namespace: N, model: M): Model<N, M>
+export function defineLexicons<const N extends AuthorityString, const M extends Record<string, RecordSpec | SpaceSpec | PermissionSetSpec>>(namespace: N, model: M): Model<N, M>
 export function defineLexicons(a: unknown, b?: unknown): unknown {
   return typeof a === 'string'
     ? buildModel(a, b as Record<string, RecordSpec | SpaceSpec | PermissionSetSpec>)
