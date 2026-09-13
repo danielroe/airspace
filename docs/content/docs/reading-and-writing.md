@@ -1,3 +1,5 @@
+# reading and writing
+
 `createAirspace` returns synchronously and resolves your identity (handle to DID to PDS) on the first call that needs it, so `export const airspace = createAirspace(...)` works at module level. A failed resolution is retried on the next call. Reads are unauthenticated; writes need a session.
 
 ```ts

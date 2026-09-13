@@ -1,3 +1,5 @@
+# spaces
+
 > [!WARNING]
 > Spaces are experimental. They need a PDS running prerelease software: atproto's `permissioned-data` branch, or the `@atproto/pds` spaces alpha. Hosted PDSes, including `bsky.social`, do not support them yet. The API may change.
 

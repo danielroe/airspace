@@ -1,3 +1,5 @@
+# your content model
+
 Write your lexicons in TypeScript under your own namespace. The first argument is the namespace and every key is a short name, so `project` is `dev.roe.project`. Every field takes `.optional()` and `.describe()`.
 
 ```ts

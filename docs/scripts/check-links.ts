@@ -1,6 +1,8 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { docsPages } from '../shared/docs-nav.ts'
+import { siteUrl } from '../shared/site.ts'
 
 const root = fileURLToPath(new URL('../.output/public', import.meta.url))
 
@@ -33,5 +35,35 @@ for (const page of pages) {
 }
 
 console.log(`${pages.length} pages, ${broken} broken links`)
-if (broken)
+
+let missing = 0
+function expectFile(path: string, contains?: string) {
+  if (!existsSync(root + path)) {
+    missing++
+    console.error(`${path} is not in the output`)
+    return
+  }
+  if (contains && !readFileSync(root + path, 'utf8').includes(contains)) {
+    missing++
+    console.error(`${path} does not mention ${contains}`)
+  }
+}
+
+for (const file of ['/robots.txt', '/sitemap.xml', '/llms.txt', '/llms-full.txt', '/index.md'])
+  expectFile(file)
+
+for (const page of docsPages) {
+  expectFile(`${page.path}.md`, `# ${page.title}`)
+  expectFile('/sitemap.xml', `${siteUrl}${page.path}</loc>`)
+  expectFile('/llms.txt', `${siteUrl}${page.path}.md`)
+
+  const source = fileURLToPath(new URL(`../content/docs/${page.slug}.md`, import.meta.url))
+  if (existsSync(`${root + page.path}.md`) && readFileSync(`${root + page.path}.md`, 'utf8').trim() !== readFileSync(source, 'utf8').trim()) {
+    missing++
+    console.error(`${page.path}.md differs from content/docs/${page.slug}.md`)
+  }
+}
+
+console.log(`${missing} missing machine-readable entries`)
+if (broken || missing)
   process.exitCode = 1

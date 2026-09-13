@@ -1,3 +1,5 @@
+# advanced
+
 ## a type-only model
 
 Importing `lexicons.ts` puts `@atproto/lex-schema` and every one of your field definitions in the bundle. If that matters more than validation does, `model` carries the NSIDs and nothing else, with the types coming from an `import type` that disappears at build time.

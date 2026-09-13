@@ -1,3 +1,5 @@
+# OAuth and permission sets
+
 `scopesFor` derives the scopes your model needs, before any session exists.
 
 ```ts

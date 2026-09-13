@@ -1,7 +1,10 @@
 import type { MarkdownDocument, Node } from 'comark'
+import type { MarkdownRoute } from '#shared/site'
 import { parseMarkdown } from 'comark'
 import rangi from 'comark/plugins/rangi'
+import { useStorage } from 'nitro/storage'
 import { cssVariables } from 'rangi/themes'
+import { landingMarkdown } from '#shared/site'
 
 export interface TocEntry {
   id: string
@@ -40,4 +43,18 @@ export function tableOfContents(document: MarkdownDocument): TocEntry[] {
       entries.push({ id, depth: tag === 'h2' ? 2 : 3, text: textOf(node) })
   }
   return entries
+}
+
+/** The markdown source behind a page. */
+export async function markdownFor(route: MarkdownRoute): Promise<string | undefined> {
+  const content = useStorage('assets:content')
+  if (!route.page) {
+    const [model, site] = await Promise.all([
+      content.getItem<string>('sample-model.md'),
+      content.getItem<string>('sample-site.md'),
+    ])
+    return landingMarkdown({ model: model || '', site: site || '' })
+  }
+  const source = await content.getItem<string>(`docs/${route.page.slug}.md`)
+  return source?.trim() ? `${source.trim()}\n` : undefined
 }

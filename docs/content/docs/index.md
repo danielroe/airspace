@@ -1,3 +1,5 @@
+# getting started
+
 A notes app, from an empty directory to a published record and a draft.
 
 ## what you need

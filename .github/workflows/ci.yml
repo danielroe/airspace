@@ -101,3 +101,6 @@ jobs:
 
       - name: 🛰 Build docs
         run: pnpm --filter airspace-docs generate
+
+      - name: 🔗 Check links and machine-readable files
+        run: pnpm --filter airspace-docs check:links

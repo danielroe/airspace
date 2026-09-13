@@ -1,3 +1,5 @@
+# validation and migrations
+
 The PDS can't validate lexicons it doesn't know, particularly inside spaces ([atproto#5433](https://github.com/bluesky-social/atproto/issues/5433)), so airspace validates every write against the schema before sending it.
 
 ```ts
