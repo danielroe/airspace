@@ -117,11 +117,6 @@ useSeoMeta({
         share one typed API. <code>airspace lexicons emit</code> writes the JSON when you want to publish your
         schemas. airspace itself defines no content model, renders nothing and hosts nothing.
       </p>
-      <p class="status">
-        <span class="badge">alpha</span>
-        Permissioned spaces are experimental: they need a PDS running prerelease software, and hosted PDSes
-        including <code>bsky.social</code> do not serve them yet. The API will change.
-      </p>
     </section>
   </div>
 </template>
@@ -274,12 +269,6 @@ s + span {
 .strip .note {
   margin-top: var(--space-sm);
   font-size: var(--text-sm);
-}
-
-.close .status {
-  margin-top: var(--space-md);
-  padding-top: var(--space-md);
-  border-top: var(--rule);
 }
 
 .close .badge {
