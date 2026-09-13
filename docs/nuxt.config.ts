@@ -22,7 +22,7 @@ export default defineNuxtConfig({
   fonts: {
     processCSSVariables: true,
     families: [
-      { name: 'Space Grotesk', provider: 'google', weights: [500, 600], styles: ['normal'], subsets: ['latin'] },
+      { name: 'Space Grotesk', provider: 'google', weights: [500], styles: ['normal'], subsets: ['latin'] },
       { name: 'Instrument Sans', provider: 'google', weights: [400, 500, 600], styles: ['normal'], subsets: ['latin'] },
       { name: 'JetBrains Mono', provider: 'google', weights: [400], styles: ['normal'], subsets: ['latin'] },
       { name: 'Caveat', provider: 'google', weights: [500], styles: ['normal'], subsets: ['latin'], glyphs: 'airspace' },

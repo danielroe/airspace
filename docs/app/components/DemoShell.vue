@@ -144,7 +144,7 @@ const repoUrl = computed(() => account.value ? `https://pdsls.dev/at://${account
   background: var(--color-accent);
   color: var(--color-accent-ink);
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 500;
   text-transform: uppercase;
 }
 
