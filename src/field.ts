@@ -219,9 +219,9 @@ export function space<const C extends readonly string[], const K extends Friendl
   return { type: 'space', key: resolveKey(key) as ResolvedKey<K>, collections, ...rest }
 }
 
-export type RecordSpec = { key?: FriendlyKey, description?: string } & { [name: string]: AnyField | string | undefined }
+export type RecordSpec = { key?: FriendlyKey | AnyField, description?: string | AnyField } & { [name: string]: AnyField | string | undefined }
 
-type FieldsOf<S> = { [K in keyof S as K extends 'key' | 'description' ? never : K]: S[K] }
+type FieldsOf<S> = { [K in keyof S as K extends 'key' | 'description' ? (S[K] extends string ? never : K) : K]: S[K] }
 type KeyOf<S> = S extends { key: infer K } ? ResolvedKey<K> : 'tid'
 type ShapeOf<S> = Shape<FieldsOf<S>>
 
@@ -235,6 +235,31 @@ type Built<N extends string, K extends string, S>
 
 /** The runtime schemas for a `defineLexicons(namespace, model)` model, keyed by short name. */
 export type Model<N extends string, M> = { [K in keyof M & string]: Built<N, K, M[K]> }
+
+const isFriendlyKey = (value: string): value is FriendlyKey => /^(?:tid|any|nsid|self)$|^literal:/.test(value)
+
+/** `key` and `description` are the record's own only when they hold a record key and a string; anything else under those names is a field. */
+function splitRecordSpec(nsid: string, spec: RecordSpec): { fields: Record<string, AnyField>, key?: FriendlyKey, description?: string } {
+  const fields: Record<string, AnyField> = {}
+  let key: FriendlyKey | undefined
+  let description: string | undefined
+  for (const [name, value] of Object.entries(spec)) {
+    if (value === undefined)
+      continue
+    if (name === 'key' && typeof value === 'string') {
+      if (!isFriendlyKey(value))
+        throw new AirspaceError(`${nsid}: "${value}" is not a record key; use 'tid', 'any', 'nsid', 'self' or 'literal:<value>'`)
+      key = value
+      continue
+    }
+    if (name === 'description' && typeof value === 'string') {
+      description = value
+      continue
+    }
+    fields[name] = value as AnyField
+  }
+  return { fields, key, description }
+}
 
 const isSpaceSpec = (spec: unknown): spec is SpaceSpec => !!spec && typeof spec === 'object' && (spec as SpaceSpec).type === 'space'
 
@@ -266,13 +291,12 @@ export function buildModel(namespace: string, model: Record<string, RecordSpec |
       } satisfies SpaceDeclaration
       continue
     }
-    const { key, description, ...rest } = spec
-    const fields = rest as Record<string, AnyField>
+    const { fields, key, description } = splitRecordSpec(nsid, spec)
     for (const target of refsOf(fields)) {
       if (!target.includes('.') && !known.has(target))
         throw new AirspaceError(`${nsid}: ref to "${target}", which is not in this model; pass a full NSID for a record elsewhere`)
     }
-    out[name] = describe(base.record(resolveKey(key as FriendlyKey | undefined), nsid, base.object(shapeOf(fields))), description as string | undefined)
+    out[name] = describe(base.record(resolveKey(key), nsid, base.object(shapeOf(fields))), description)
   }
   return out
 }

@@ -293,6 +293,47 @@ describe('defineLexicons(namespace, model)', () => {
     lexiconDocumentSchema.parse(byId['space.getair.notes.authFull'])
   })
 
+  it('treats `description` and `key` as fields unless they hold a record description or key', () => {
+    const model = defineLexicons('dev.example.docs', {
+      project: {
+        description: field.text({ max: 2500 }).optional(),
+        key: field.text({ max: 40 }),
+        name: field.text(),
+      },
+      page: {
+        key: 'self',
+        description: 'A page.',
+        title: field.text(),
+      },
+    })
+    expectTypeOf<Infer<typeof model.project>['description']>().toEqualTypeOf<string | undefined>()
+    expectTypeOf<Infer<typeof model.project>['key']>().toEqualTypeOf<string>()
+    expect(model.project.key).toBe('tid')
+    expect(model.page.key).toBe('literal:self')
+
+    const byNsid = Object.fromEntries(toLexiconJson(model).map(d => [d.id, d]))
+    expect(byNsid['dev.example.docs.project']!.defs.main).toEqual({
+      type: 'record',
+      key: 'tid',
+      record: {
+        type: 'object',
+        required: ['key', 'name'],
+        properties: {
+          description: { type: 'string', maxGraphemes: 2500, maxLength: 25_000 },
+          key: { type: 'string', maxGraphemes: 40, maxLength: 400 },
+          name: { type: 'string', maxGraphemes: 1000, maxLength: 10_000 },
+        },
+      },
+    })
+    expect(byNsid['dev.example.docs.page']!.defs.main).toMatchObject({ type: 'record', key: 'literal:self', description: 'A page.' })
+    for (const doc of Object.values(byNsid)) lexiconDocumentSchema.parse(doc)
+  })
+
+  it('rejects a key that is not a record key', () => {
+    // @ts-expect-error not a record key
+    expect(() => defineLexicons('dev.example.docs', { page: { key: 'slug', title: field.text() } })).toThrow(/"slug" is not a record key/)
+  })
+
   it('rejects a ref or a space collection that names nothing in the model', () => {
     expect(() => defineLexicons('dev.example.notes', { authFull: permissions({ collections: ['nope'] }) })).toThrow(/no "nope" in this model/)
     expect(() => defineLexicons('dev.example.notes', { note: { tag: field.ref('missing') } })).toThrow(/not in this model/)
