@@ -166,13 +166,13 @@ s + span {
   line-height: 1.02;
   letter-spacing: -0.035em;
   margin: 0;
-  max-width: 13ch;
+  max-width: 6.5em;
 }
 
 .lede {
   font-size: var(--text-lg);
   color: var(--color-ink-2);
-  max-width: 52ch;
+  max-width: 26em;
   margin: var(--space-md) 0 0;
   text-wrap: pretty;
 }
@@ -254,7 +254,7 @@ s + span {
 .spec dd {
   margin: var(--space-3xs) 0 0;
   color: var(--color-ink-2);
-  max-width: 46ch;
+  max-width: 23em;
   text-wrap: pretty;
 }
 

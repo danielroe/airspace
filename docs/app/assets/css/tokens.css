@@ -67,8 +67,8 @@
   --dur-fast: 110ms;
   --dur-base: 170ms;
 
-  --measure: 66ch;
-  --measure-wide: 80ch;
+  --measure: 33rem;
+  --measure-wide: 40rem;
   --wide: 74rem;
   --gutter: clamp(1.25rem, 5vw, 4rem);
 }
