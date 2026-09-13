@@ -247,6 +247,9 @@ overrides:
   '@atproto/xrpc@^0.0.0-spaces-alpha-20260910230440': 0.0.0-spaces-alpha-20260910230440
   airspace: workspace:*
 
+patchedDependencies:
+  '@atproto/dev-env@0.0.0-spaces-alpha-20260910230440': ed687937aea7309e2813bce402afdc18598e8a6418ed2a95aabdaa927443707a
+
 importers:
 
   .:
@@ -278,7 +281,7 @@ importers:
         version: 0.18.5
       '@atproto/dev-env':
         specifier: 0.0.0-spaces-alpha-20260910230440
-        version: 0.0.0-spaces-alpha-20260910230440(@opentelemetry/api@1.9.1)(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
+        version: 0.0.0-spaces-alpha-20260910230440(patch_hash=ed687937aea7309e2813bce402afdc18598e8a6418ed2a95aabdaa927443707a)(@opentelemetry/api@1.9.1)(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
       '@atproto/lex':
         specifier: 0.3.8
         version: 0.3.8
@@ -9910,7 +9913,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       uint8arrays: 5.1.1
 
-  '@atproto/dev-env@0.0.0-spaces-alpha-20260910230440(@opentelemetry/api@1.9.1)(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)':
+  '@atproto/dev-env@0.0.0-spaces-alpha-20260910230440(patch_hash=ed687937aea7309e2813bce402afdc18598e8a6418ed2a95aabdaa927443707a)(@opentelemetry/api@1.9.1)(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)':
     dependencies:
       '@atproto/api': 0.0.0-spaces-alpha-20260910230440
       '@atproto/bsky': 0.0.0-spaces-alpha-20260910230440(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)

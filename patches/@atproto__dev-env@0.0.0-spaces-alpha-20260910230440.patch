@@ -1,0 +1,33 @@
+diff --git a/dist/get-port.js b/dist/get-port.js
+index 24622e8587835f51393f5bd4c166e2fcad4999ab..a6fd87a0d81fd4a727f42051fe915543ac2bba8b 100644
+--- a/dist/get-port.js
++++ b/dist/get-port.js
+@@ -1,6 +1,6 @@
+ import { randomUUID } from 'node:crypto';
+ import { unlinkSync } from 'node:fs';
+-import { link, mkdir, readFile, readdir, unlink, writeFile, } from 'node:fs/promises';
++import { link, mkdir, readFile, readdir, rename, unlink, writeFile, } from 'node:fs/promises';
+ import { tmpdir } from 'node:os';
+ import { basename, join } from 'node:path';
+ import getAvailablePort from 'get-port';
+@@ -8,7 +8,9 @@ const SWEEP_INTERVAL_MS = 1_000;
+ const SWEEP_LOCK_PATTERN = /^\.sweep-(\d+)$/;
+ const lockDir = join(tmpdir(), `atproto-dev-env-ports-${process.getuid?.() ?? 'unknown'}`);
+ const claimedPorts = new Set();
+-const ownerPath = join(lockDir, `.owner-${process.pid}-${randomUUID()}`);
++const ownerId = `${process.pid}-${randomUUID()}`;
++const ownerPath = join(lockDir, `.owner-${ownerId}`);
++const pendingOwnerPath = join(lockDir, `.pending-${ownerId}`);
+ let initialize;
+ const isProcessRunning = (pid) => {
+     try {
+@@ -93,7 +95,8 @@ export const sweepStaleReservations = async (lockDir, ownerPath) => {
+ };
+ const initializeLockDir = async () => {
+     await mkdir(lockDir, { recursive: true });
+-    await writeFile(ownerPath, String(process.pid), { flag: 'wx' });
++    await writeFile(pendingOwnerPath, String(process.pid), { flag: 'wx' });
++    await rename(pendingOwnerPath, ownerPath);
+     const releaseSweepLock = await acquireSweepLock(lockDir, ownerPath);
+     if (!releaseSweepLock)
+         return;
