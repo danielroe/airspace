@@ -189,7 +189,7 @@ useHead({
 
 .prose :deep(h3) {
   font-size: var(--text-lg);
-  font-weight: 600;
+  font-weight: 500;
   margin: var(--space-lg) 0 var(--space-xs);
   scroll-margin-top: 2rem;
 }
