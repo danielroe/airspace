@@ -166,7 +166,8 @@ s + span {
   line-height: 1.02;
   letter-spacing: -0.035em;
   margin: 0;
-  max-width: 6.5em;
+  max-width: 9em;
+  text-wrap: balance;
 }
 
 .lede {
