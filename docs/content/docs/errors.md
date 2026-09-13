@@ -1,3 +1,5 @@
+# errors
+
 Every error airspace throws extends `AirspaceError`, and all of them are exported from `airspace`, so you never catch a `@atproto/lex` error.
 
 | Error | Thrown when | Carries |

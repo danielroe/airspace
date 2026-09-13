@@ -14,5 +14,5 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: `content/docs/${page.slug}.md missing` })
 
   const document = await parseSiteMarkdown(source)
-  return { document, toc: tableOfContents(document), title: page.title }
+  return { document, toc: tableOfContents(document) }
 })

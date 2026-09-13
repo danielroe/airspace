@@ -1,3 +1,5 @@
+# blobs and images
+
 ```ts
 const { blob, cid, mimeType, size, aspectRatio } = await airspace.blobs.upload(file, { maxBytes: 2_000_000 })
 await airspace.projects.put(rkey, { ...value, images: [{ alt: 'Screenshot', image: blob }] })

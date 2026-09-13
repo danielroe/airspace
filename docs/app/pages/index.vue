@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { MarkdownDocument } from '@comark/vue/components/MarkdownDocument'
+import { packageUrl, repositoryUrl, siteDescription, siteName, siteUrl } from '#shared/site'
 
 const [{ data: model }, { data: site }] = await Promise.all([
   useFetch('/api/content/sample-model'),
@@ -15,6 +16,28 @@ useSeoMeta({
   ogImage: 'https://getair.space/og.png',
   ogType: 'website',
   twitterCard: 'summary_large_image',
+})
+
+useHead({
+  script: [{
+    type: 'application/ld+json',
+    innerHTML: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      'name': siteName,
+      'alternateName': 'airspace for atproto',
+      'applicationCategory': 'DeveloperApplication',
+      'operatingSystem': 'Node.js 22+',
+      'description': siteDescription,
+      'url': siteUrl,
+      'downloadUrl': packageUrl,
+      'codeRepository': repositoryUrl,
+      'license': 'https://opensource.org/licenses/MIT',
+      'sameAs': [repositoryUrl, packageUrl],
+      'author': { '@type': 'Person', 'name': 'Daniel Roe', 'url': 'https://roe.dev' },
+      'offers': { '@type': 'Offer', 'price': '0', 'priceCurrency': 'USD' },
+    }),
+  }],
 })
 </script>
 

@@ -6,7 +6,10 @@ export default defineNuxtConfig({
   app: {
     head: {
       htmlAttrs: { lang: 'en' },
-      link: [{ rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' }],
+      link: [
+        { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
+        { rel: 'alternate', type: 'text/plain', href: '/llms.txt', title: 'llms.txt' },
+      ],
       meta: [
         { name: 'theme-color', content: '#f9fafb', media: '(prefers-color-scheme: light)' },
         { name: 'theme-color', content: '#111721', media: '(prefers-color-scheme: dark)' },
@@ -40,6 +43,10 @@ export default defineNuxtConfig({
     prerender: {
       routes: [
         '/',
+        '/llms.txt',
+        '/llms-full.txt',
+        '/robots.txt',
+        '/sitemap.xml',
         '/api/content/sample-model',
         '/api/content/sample-site',
         ...docsPages.map(page => page.path),

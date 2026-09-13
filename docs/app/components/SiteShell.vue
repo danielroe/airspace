@@ -1,6 +1,23 @@
 <script setup lang="ts">
+import { siteUrl } from '#shared/site'
+
 const route = useRoute()
 const wide = computed(() => route.path === '/' || route.path.startsWith('/docs') || route.path.startsWith('/demo'))
+
+const canonical = computed(() => siteUrl + (route.path === '/' ? '/' : route.path.replace(/\/$/, '')))
+const markdown = computed(() => {
+  const path = route.path.replace(/\/$/, '')
+  if (path === '')
+    return '/index.md'
+  return path === '/docs' || path.startsWith('/docs/') ? `${path}.md` : undefined
+})
+
+useHead({
+  link: () => [
+    { rel: 'canonical', href: canonical.value },
+    ...markdown.value ? [{ rel: 'alternate', type: 'text/markdown', href: markdown.value }] : [],
+  ],
+})
 </script>
 
 <template>

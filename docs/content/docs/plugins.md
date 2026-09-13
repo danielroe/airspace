@@ -1,3 +1,5 @@
+# plugins
+
 A plugin is `{ name, read?, write? }`. `read` returns data for `record.meta`, which is typed by inference from the plugins you register.
 
 ```ts

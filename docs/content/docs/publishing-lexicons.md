@@ -1,3 +1,5 @@
+# publishing your lexicons
+
 Publishing your lexicons as `com.atproto.lexicon.schema` records lets anyone else resolve them.
 
 ```sh

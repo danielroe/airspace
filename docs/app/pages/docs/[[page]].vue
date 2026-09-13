@@ -91,7 +91,6 @@ useHead({
     </nav>
 
     <article class="prose">
-      <h1>{{ page!.title }}</h1>
       <MarkdownDocument v-if="content" :value="content.document" />
 
       <nav class="pager" aria-label="Pagination">
@@ -175,7 +174,7 @@ useHead({
   max-width: var(--measure-wide);
 }
 
-.prose h1 {
+.prose :deep(h1) {
   font-size: var(--text-3xl);
   margin: 0 0 var(--space-md);
 }
