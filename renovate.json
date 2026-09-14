@@ -2,5 +2,17 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "github>danielroe/renovate"
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": ["@atproto/**", "@atproto-labs/**"],
+      "groupName": "atproto"
+    },
+    {
+      "matchPackageNames": ["@atproto/**", "@atproto-labs/**"],
+      "matchCurrentValue": "/spaces-alpha/",
+      "groupName": "atproto spaces alpha",
+      "enabled": false
+    }
   ]
 }
