@@ -9,10 +9,10 @@
   },
   "dependencies": {
     "@astrojs/node": "^9.4.4",
-    "@comark/html": "^0.6.2",
+    "@comark/html": "^0.7.0",
     "airspace": "workspace:*",
     "astro": "^5.16.2",
-    "comark": "^0.6.2",
+    "comark": "^0.7.0",
     "typescript": "6.0.3"
   }
 }
