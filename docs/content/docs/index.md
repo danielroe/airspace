@@ -121,7 +121,7 @@ Both notes are now in your public repo, which you can browse on [`pdsls`](https:
 Anything in your repo is public straight away, which is awkward for a half-finished note. A space is a private area of the same repo, and `publish()` copies a record out of it.
 
 > [!WARNING]
-> Spaces are experimental. They need a PDS running prerelease software: atproto's `permissioned-data` branch, or the `@atproto/pds` spaces alpha. Hosted PDSes, including `bsky.social`, do not support them yet. The API may change. `pnpm dev:pds` runs one that does support them.
+> Spaces are experimental. They need a PDS running prerelease software: atproto's `permissioned-data` branch, or the `@atproto/pds` [spaces alpha](https://atproto.com/blog/atproto-spaces-alpha). Hosted PDSes, including `bsky.social`, do not support them yet. The API may change. `pnpm dev:pds` runs one that does support them.
 
 ```ts
 const draft = await airspace.workspace.notes.create({

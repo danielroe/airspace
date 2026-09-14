@@ -3,7 +3,7 @@
 Anything in your repo is public straight away, which is no good for drafts. A [permissioned space](https://github.com/bluesky-social/proposals/tree/main/0016-permissioned-data) is a private area of the same repo, using the same collections and schemas.
 
 > [!WARNING]
-> Spaces are experimental. They need a PDS running prerelease software: atproto's `permissioned-data` branch, or the `@atproto/pds` spaces alpha. Hosted PDSes, including `bsky.social`, do not support them yet. The API may change.
+> Spaces are experimental. They need a PDS running prerelease software: atproto's `permissioned-data` branch, or the `@atproto/pds` [spaces alpha](https://atproto.com/blog/atproto-spaces-alpha). Hosted PDSes, including `bsky.social`, do not support them yet. The API may change.
 
 ## drafting and publishing
 

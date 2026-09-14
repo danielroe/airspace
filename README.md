@@ -49,7 +49,7 @@ await airspace.notes.create({ title: 'Hello', body: '# hi', createdAt: new Date(
 ```
 
 > [!WARNING]
-> Permissioned spaces, where drafts and private records live, are experimental. They need a PDS running prerelease software: atproto's `permissioned-data` branch, or the `@atproto/pds` spaces alpha. Hosted PDSes, including `bsky.social`, do not support them yet. The API may change.
+> Permissioned spaces, where drafts and private records live, are experimental. They need a PDS running prerelease software: atproto's `permissioned-data` branch, or the `@atproto/pds` [spaces alpha](https://atproto.com/blog/atproto-spaces-alpha). Hosted PDSes, including `bsky.social`, do not support them yet. The API may change.
 
 ## docs
 
