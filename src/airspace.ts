@@ -32,9 +32,9 @@ export interface CacheStorage {
 }
 
 export interface CacheOptions {
-  /** How long a listing or record stays fresh, in milliseconds. Writes invalidate their collection. */
+  /** How long a listing or record stays fresh, in milliseconds. Writes invalidate their collection. `0` only shares in-flight reads. */
   ttl: number
-  /** Survive a restart, and share the cache between processes. Reads fall back to the PDS on any storage error. */
+  /** Survive a restart, and share the cache between processes. Reads fall back to the PDS on any storage error. Needs a `ttl` above `0`. */
   storage?: CacheStorage
 }
 
@@ -155,6 +155,8 @@ export function createAirspace<
   const plugins: readonly AnyPlugin[] = options.plugins ?? []
   const ttl = options.cache?.ttl ?? 0
   const storage = options.cache?.storage
+  if (storage && !(ttl > 0))
+    throw new AirspaceError('cache.storage needs a ttl above 0')
   const keyOf = new WeakMap<Backend, string>()
 
   const runtime = once(async (): Promise<Runtime> => {

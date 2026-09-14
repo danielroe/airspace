@@ -611,6 +611,12 @@ describe('blobs', () => {
 })
 
 describe('cache', () => {
+  it('refuses persistent storage without a ttl', async () => {
+    const account = await pds.account()
+    const storage = { getItem: async () => null, setItem: async () => {}, removeItem: async () => {}, getKeys: async () => [] }
+    expect(() => createAirspace({ identity: { did: account.did, service: pds.service }, collections: { categories }, cache: { ttl: 0, storage } })).toThrow(/ttl above 0/)
+  })
+
   it('shares in-flight reads, reuses them within the ttl, and drops them on write', async () => {
     const account = await pds.account()
     const airspace = createAirspace({
