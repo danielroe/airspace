@@ -9,7 +9,7 @@ export interface ResolveOptions {
 }
 
 /** The response body as text, refusing anything over `limit` bytes. */
-export async function boundedText(res: Response, limit = MAX_BODY): Promise<string> {
+export async function boundedText(res: Response, limit: number = MAX_BODY): Promise<string> {
   const declared = Number(res.headers.get('content-length'))
   if (declared > limit)
     throw new AirspaceError(`response body is ${declared} bytes, over the ${limit} byte limit`)
@@ -41,7 +41,7 @@ export async function boundedText(res: Response, limit = MAX_BODY): Promise<stri
   return new TextDecoder().decode(bytes)
 }
 
-export async function boundedJson<T>(res: Response, limit = MAX_BODY): Promise<T> {
+export async function boundedJson<T>(res: Response, limit: number = MAX_BODY): Promise<T> {
   return JSON.parse(await boundedText(res, limit)) as T
 }
 

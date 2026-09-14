@@ -24,7 +24,7 @@ const DID_SYNTAX = /^did:[a-z]+:[\w.:%-]*[\w.-]$/i
 export const isDid = (value: unknown): value is DidString => typeof value === 'string' && DID_SYNTAX.test(value) && value.length <= 2048
 
 /** Syntactically a handle: a DNS name of at least two labels, not under a reserved TLD. */
-export const isHandle = isPublicHostname
+export const isHandle: (value: unknown) => value is string = isPublicHostname
 
 /** A `did:web` DID is supported in its hostname form only, with a `%3A`-encoded port for `localhost`. */
 export function didWebUrl(did: string): URL | undefined {
