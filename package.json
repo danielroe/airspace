@@ -82,11 +82,12 @@
     "lint": "eslint . --fix",
     "prepare": "simple-git-hooks",
     "prepack": "pnpm build",
-    "test": "pnpm test:unit && pnpm test:types && pnpm test:knip",
+    "test": "pnpm test:unit && pnpm test:types && pnpm test:build && pnpm test:knip",
     "test:unit": "vitest",
     "test:knip": "knip",
     "test:versions": "installed-check -d --no-workspaces",
     "test:types": "tsc --noEmit",
+    "test:build": "tsdown",
     "lex:build": "node scripts/build-lex.ts",
     "size": "node scripts/size.ts",
     "dev:pds": "node test/pds-serve.mjs"
