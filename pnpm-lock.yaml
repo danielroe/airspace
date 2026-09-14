@@ -383,8 +383,8 @@ importers:
         specifier: ^9.4.4
         version: 9.5.5(astro@5.18.2(@types/node@26.5.1)(db0@0.4.1)(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(lightningcss@1.33.0)(rollup@4.63.1)(supports-color@10.2.2)(terser@5.51.2)(typescript@6.0.3)(yaml@2.9.0))(supports-color@10.2.2)
       '@comark/html':
-        specifier: ^0.6.2
-        version: 0.6.2(rangi@2.2.0)(shiki@4.4.3)
+        specifier: ^0.7.0
+        version: 0.7.0(rangi@2.2.0)(shiki@4.4.3)
       airspace:
         specifier: workspace:*
         version: link:../..
@@ -392,8 +392,8 @@ importers:
         specifier: ^5.16.2
         version: 5.18.2(@types/node@26.5.1)(db0@0.4.1)(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(lightningcss@1.33.0)(rollup@4.63.1)(supports-color@10.2.2)(terser@5.51.2)(typescript@6.0.3)(yaml@2.9.0)
       comark:
-        specifier: ^0.6.2
-        version: 0.6.2(rangi@2.2.0)(shiki@4.4.3)
+        specifier: ^0.7.0
+        version: 0.7.0(rangi@2.2.0)(shiki@4.4.3)
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -404,8 +404,8 @@ importers:
         specifier: workspace:*
         version: link:../..
       comark:
-        specifier: ^0.6.2
-        version: 0.6.2(rangi@2.2.0)(shiki@4.4.3)
+        specifier: ^0.7.0
+        version: 0.7.0(rangi@2.2.0)(shiki@4.4.3)
     devDependencies:
       '@types/node':
         specifier: ^26.5.0
@@ -417,14 +417,14 @@ importers:
   examples/nuxt:
     dependencies:
       '@comark/vue':
-        specifier: ^0.6.2
-        version: 0.6.2(rangi@2.2.0)(shiki@4.4.3)(vue@3.5.42(typescript@6.0.3))
+        specifier: ^0.7.0
+        version: 0.7.0(rangi@2.2.0)(shiki@4.4.3)(vue@3.5.42(typescript@6.0.3))
       airspace:
         specifier: workspace:*
         version: link:../..
       comark:
-        specifier: ^0.6.2
-        version: 0.6.2(rangi@2.2.0)(shiki@4.4.3)
+        specifier: ^0.7.0
+        version: 0.7.0(rangi@2.2.0)(shiki@4.4.3)
       nuxt:
         specifier: ^4.2.2
         version: 4.5.2(@babel/plugin-syntax-jsx@7.29.7(@babel/core@7.29.7(supports-color@10.2.2)))(@babel/plugin-syntax-typescript@7.29.7(@babel/core@7.29.7(supports-color@10.2.2)))(@oxc-project/types@0.149.0)(@types/node@26.5.1)(@vue/compiler-sfc@3.5.42)(better-sqlite3@12.11.1)(db0@0.3.4(better-sqlite3@12.11.1))(esbuild@0.28.2)(eslint@10.10.0(jiti@2.7.0)(supports-color@10.2.2))(ioredis@5.11.1(supports-color@10.2.2))(lightningcss@1.33.0)(magicast@0.5.4)(optionator@0.9.4)(oxc-parser@0.148.0)(rolldown@1.2.8)(rollup-plugin-visualizer@7.1.1(rolldown@1.2.8)(rollup@4.63.1))(rollup@4.63.1)(srvx@0.11.22)(supports-color@10.2.2)(terser@5.51.2)(typescript@6.0.3)(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.0))(vue-tsc@3.3.11(typescript@6.0.3))(yaml@2.9.0)
@@ -439,14 +439,14 @@ importers:
   examples/sveltekit:
     dependencies:
       '@comark/svelte':
-        specifier: ^0.6.2
-        version: 0.6.2(rangi@2.2.0)(shiki@4.4.3)(svelte@5.57.0(@typescript-eslint/types@8.70.0))
+        specifier: ^0.7.0
+        version: 0.7.0(rangi@2.2.0)(shiki@4.4.3)(svelte@5.57.0(@typescript-eslint/types@8.70.0))
       airspace:
         specifier: workspace:*
         version: link:../..
       comark:
-        specifier: ^0.6.2
-        version: 0.6.2(rangi@2.2.0)(shiki@4.4.3)
+        specifier: ^0.7.0
+        version: 0.7.0(rangi@2.2.0)(shiki@4.4.3)
     devDependencies:
       '@sveltejs/adapter-node':
         specifier: ^5.5.7
@@ -1195,8 +1195,8 @@ packages:
   '@colordx/core@5.8.0':
     resolution: {integrity: sha512-cG0QJAO6VkaRUlIb0zOzX9gfJgs1pjoOL9gZ/PK1kfvBs0GCkADu5oQh6gPxXgQnZ3gV575h+lQRC0NlMDTclA==}
 
-  '@comark/html@0.6.2':
-    resolution: {integrity: sha512-ke1/rxpgsrRdfx/4LFURFQCqc2Bv/eVZd+Eenk8x/8IX4346HOGReiWuWWs11mpzHibkKFaPq56zWsnn7Eu8lw==}
+  '@comark/html@0.7.0':
+    resolution: {integrity: sha512-lTt7C2DK5gQt5BFcGD9GAfLhw8MnrZ15CKKJbqMJf2oQGZyjPe56CnL73Nj/cx+B/59t22pLRknpdbJmhNabWA==}
     peerDependencies:
       beautiful-mermaid: '>=1.0'
       katex: '>=0.16'
@@ -1209,28 +1209,13 @@ packages:
       shiki:
         optional: true
 
-  '@comark/svelte@0.6.2':
-    resolution: {integrity: sha512-Bu6d3f8gz2BEMZnD2jlCPYZ6PofpEJfVh+0aPg2TDMMBJJVzu1zykMP3NRQMCPGLN9zOc7yhs/znyuxpc7U6Ow==}
+  '@comark/svelte@0.7.0':
+    resolution: {integrity: sha512-JsdZLfsLgW7zpouhvOONPdZPK0sp6LBJU6gm5wMVjBHvGQi0Q+ziEu/ESplpMNpHikbIFc0Cbh81YBwWx8vUjg==}
     peerDependencies:
       beautiful-mermaid: ^1.1.3
       katex: ^0.17.0
       shiki: ^4.3.1
       svelte: ^5.0.0
-    peerDependenciesMeta:
-      beautiful-mermaid:
-        optional: true
-      katex:
-        optional: true
-      shiki:
-        optional: true
-
-  '@comark/vue@0.6.2':
-    resolution: {integrity: sha512-ToRyzz4I96DjXtDgYOC1WnNWt0W6YgOcazuT8rVRMJRR86NXBLATnIWb3hdMM0/8lMaDz+DmlcpX5EN1hqsG0Q==}
-    peerDependencies:
-      beautiful-mermaid: ^1.1.3
-      katex: ^0.17.0
-      shiki: ^4.3.1
-      vue: ^3.5.0
     peerDependenciesMeta:
       beautiful-mermaid:
         optional: true
@@ -4915,23 +4900,6 @@ packages:
   color@4.2.3:
     resolution: {integrity: sha512-1rXeuUUiGGrykh+CeBdu5Ie7OJwinCgQY0bc7GCRxy5xVHy+moaqkpL/jqQq0MtQOeYcrqEz4abc5f0KtU7W4A==}
     engines: {node: '>=12.5.0'}
-
-  comark@0.6.2:
-    resolution: {integrity: sha512-hlWa7KlGPfRxovQavnHZlLlTUKrfwE7/o4ewCY0FzqFtRvVT8VdslrumQwELIiK9utsurpoSWCBFj1yVMtDOtw==}
-    peerDependencies:
-      beautiful-mermaid: ^1.1.3
-      katex: ^0.17.0
-      rangi: ^2.2.0
-      shiki: ^4.3.1
-    peerDependenciesMeta:
-      beautiful-mermaid:
-        optional: true
-      katex:
-        optional: true
-      rangi:
-        optional: true
-      shiki:
-        optional: true
 
   comark@0.7.0:
     resolution: {integrity: sha512-680hLtUOBcvBEJCD+iCU20jk5TrIJlIcE6X4npdC4x7LBhCvmiYJgByozR2fKav6DYw7AYoXsJVae65kXV6Qhw==}
@@ -10880,27 +10848,18 @@ snapshots:
 
   '@colordx/core@5.8.0': {}
 
-  '@comark/html@0.6.2(rangi@2.2.0)(shiki@4.4.3)':
+  '@comark/html@0.7.0(rangi@2.2.0)(shiki@4.4.3)':
     dependencies:
-      comark: 0.6.2(rangi@2.2.0)(shiki@4.4.3)
+      comark: 0.7.0(rangi@2.2.0)(shiki@4.4.3)
     optionalDependencies:
       shiki: 4.4.3
     transitivePeerDependencies:
       - rangi
 
-  '@comark/svelte@0.6.2(rangi@2.2.0)(shiki@4.4.3)(svelte@5.57.0(@typescript-eslint/types@8.70.0))':
+  '@comark/svelte@0.7.0(rangi@2.2.0)(shiki@4.4.3)(svelte@5.57.0(@typescript-eslint/types@8.70.0))':
     dependencies:
-      comark: 0.6.2(rangi@2.2.0)(shiki@4.4.3)
+      comark: 0.7.0(rangi@2.2.0)(shiki@4.4.3)
       svelte: 5.57.0(@typescript-eslint/types@8.70.0)
-    optionalDependencies:
-      shiki: 4.4.3
-    transitivePeerDependencies:
-      - rangi
-
-  '@comark/vue@0.6.2(rangi@2.2.0)(shiki@4.4.3)(vue@3.5.42(typescript@6.0.3))':
-    dependencies:
-      comark: 0.6.2(rangi@2.2.0)(shiki@4.4.3)
-      vue: 3.5.42(typescript@6.0.3)
     optionalDependencies:
       shiki: 4.4.3
     transitivePeerDependencies:
@@ -14974,16 +14933,6 @@ snapshots:
     dependencies:
       color-convert: 2.0.1
       color-string: 1.9.1
-
-  comark@0.6.2(rangi@2.2.0)(shiki@4.4.3):
-    dependencies:
-      entities: 8.1.0
-      htmlparser2: 12.0.0
-      js-yaml: 5.4.1
-      markdown-exit: 1.1.0-beta.2
-    optionalDependencies:
-      rangi: 2.2.0
-      shiki: 4.4.3
 
   comark@0.7.0(rangi@2.2.0)(shiki@4.4.3):
     dependencies:

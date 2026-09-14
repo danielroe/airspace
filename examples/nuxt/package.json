@@ -9,9 +9,9 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
-    "@comark/vue": "^0.6.2",
+    "@comark/vue": "^0.7.0",
     "airspace": "workspace:*",
-    "comark": "^0.6.2",
+    "comark": "^0.7.0",
     "nuxt": "^4.2.2",
     "vue": "^3.5.24"
   },
