@@ -26,12 +26,24 @@ export interface ResolvedImage {
 
 const isBlobRef = (value: object): value is BlobLike => (value as BlobLike).$type === 'blob' || ('ref' in value && !('image' in value) && !('uri' in value))
 
-/** Renderable source for an image def or a bare blob, whichever of `image` or `uri` it carries. */
+function webUrl(value: unknown): string | null {
+  if (typeof value !== 'string')
+    return null
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' || url.protocol === 'http:' ? value : null
+  }
+  catch {
+    return null
+  }
+}
+
+/** Renderable source for an image def or a bare blob, whichever of `image` or `uri` it carries. Only `https:` and `http:` sources are returned. */
 export function resolveImage(source: ImageSource | undefined | null, blobUrl: (blob: unknown) => string | null): ResolvedImage | null {
   if (!source)
     return null
   const image: ImageLike = isBlobRef(source) ? { image: source } : source
-  const url = image.image ? blobUrl(image.image) : image.uri
+  const url = image.image ? blobUrl(image.image) : webUrl(image.uri)
   if (!url)
     return null
   return {

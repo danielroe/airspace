@@ -585,6 +585,16 @@ describe('blobs', () => {
     expect(await airspace.blobs.image(uploaded.blob)).toEqual({ url, alt: '', width: undefined, height: undefined })
   })
 
+  it('returns only an http(s) source for an image def carrying a uri', async () => {
+    const { airspace } = await setup()
+    expect(await airspace.blobs.image({ uri: 'https://cdn.example.com/a.png', alt: 'ok' })).toEqual({ url: 'https://cdn.example.com/a.png', alt: 'ok', width: undefined, height: undefined })
+
+    expect(await airspace.blobs.image({ uri: 'javascript:alert(document.cookie)' })).toBeNull()
+    expect(await airspace.blobs.image({ uri: 'data:text/html,<script>alert(1)</script>' })).toBeNull()
+    expect(await airspace.blobs.image({ uri: 'file:///etc/passwd' })).toBeNull()
+    expect(await airspace.blobs.image({ uri: '/relative.png' })).toBeNull()
+  })
+
   it('takes the mime type from a Blob and skips dimensions for non-images', async () => {
     const { airspace } = await setup()
     const uploaded = await airspace.blobs.upload(new Blob(['hello'], { type: 'text/plain' }))
