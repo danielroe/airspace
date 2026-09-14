@@ -112,16 +112,16 @@
     "image-meta": "^0.2.2"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "9.3.0",
+    "@antfu/eslint-config": "9.5.1",
     "@arethetypeswrong/core": "0.18.5",
     "@atproto/dev-env": "0.0.0-spaces-alpha-20260910230440",
     "@atproto/lex": "0.3.11",
     "@atproto/lex-document": "0.1.11",
     "@atproto/oauth-client-node": "0.5.7",
-    "@types/node": "26.5.0",
+    "@types/node": "26.5.1",
     "@types/ws": "8.18.1",
     "@vitest/coverage-v8": "5.0.0",
-    "comark": "0.6.2",
+    "comark": "0.7.0",
     "esbuild": "0.28.2",
     "eslint": "10.10.0",
     "installed-check": "11.0.0",
@@ -130,7 +130,7 @@
     "pkg-pr-new": "0.0.88",
     "publint": "0.3.24",
     "simple-git-hooks": "2.14.0",
-    "tsdown": "0.22.14",
+    "tsdown": "0.23.0",
     "typescript": "6.0.3",
     "vitest": "5.0.0",
     "ws": "8.21.3"
