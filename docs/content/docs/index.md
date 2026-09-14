@@ -1,13 +1,14 @@
 # getting started
 
-A notes app, from an empty directory to a published record and a draft.
+airspace uses an atproto account as the backend for your app: typed reads and writes, file uploads, login and a public API, with no database to run.
+
+This page shows how to use `airspace` by building a sample app. New to atproto? [Read the terms first](/docs/concepts).
 
 ## what you need
 
-- Node 22 or newer.
-- A PDS you can log into.
+Node 22 or newer, and an account on a PDS (personal data server) you can log into.
 
-**To run a PDS locally**, clone the `airspace` repository and start it:
+To run a PDS locally:
 
 ```sh
 git clone https://github.com/danielroe/airspace
@@ -18,9 +19,7 @@ pnpm dev:pds
 
 That serves a PDS on `http://localhost:2583` and prints credentials for two accounts. Keep it running.
 
-**You can also use your own PDS**. Create an app password in your account settings, and use your handle and `https://bsky.social` (or wherever your account lives) as the service.
-
-If you're using your own PDS, you can read and write public collections, but spaces are probably not supported yet (see below).
+To use your own account instead, create an app password in your account settings, and use `https://bsky.social` (or wherever your account lives) as the service. Spaces, at the end of this page, won't work there yet.
 
 ## a project
 
@@ -31,7 +30,9 @@ pnpm pkg set type=module
 pnpm add airspace
 ```
 
-## your lexicons
+## your schemas
+
+Every record needs a schema, called a lexicon:
 
 ```ts
 // lexicons.ts
@@ -47,11 +48,13 @@ export default defineLexicons('dev.example', {
 })
 ```
 
-The first argument is your namespace. A namespace is a reversed domain, for example `getair.space` becomes `space.getair` &ndash; which sadly isn't that catchy.
+The first argument is your namespace: a domain you own, reversed. `getair.space` becomes `space.getair`, which sadly isn't that catchy. So `note` here defines the record type `dev.example.note`.
 
-So, `note` becomes `dev.example.note`. Use a namespace under a domain you control.
+`workspace` declares a [space](/docs/spaces), a private area for drafts, used at the end of this page.
 
 ## your collections
+
+Records of one type live in a collection:
 
 ```ts
 // collections.ts
@@ -69,6 +72,8 @@ export const workspace = defineSpace(lexicons.workspace, {
 
 ## a client
 
+Reads need no credentials, since a repo is public. Writes need a session:
+
 ```ts
 // notes.ts
 import { createAirspace, passwordSession } from 'airspace'
@@ -81,15 +86,12 @@ const session = await passwordSession({
 })
 
 export const airspace = createAirspace({
+  // on a public PDS, your handle is enough: identity: 'you.example.com'
   identity: { did: process.env.PDS_DID!, service: 'http://localhost:2583' },
   spaces: { workspace },
   session,
 })
 ```
-
-If you are using a public PDS, it's enough to specify the `identity: 'you.example.com'`. The handle can be resolved to a DID and a PDS on the first call that needs it.
-
-If you're running a local PDS (for testing, perhaps), you will need to pass `{ did, service }`.
 
 ## read and write
 
@@ -108,14 +110,15 @@ for (const note of await airspace.notes.list())
 ```
 
 ```sh
+# `pnpm dev:pds` prints all three
 PDS_DID=did:plc:... PDS_IDENTIFIER=alice.test PDS_PASSWORD=hunter2 node run.ts
 ```
 
-`pnpm dev:pds` prints all three.
-
-Records are now in your public repo &ndash; you can browse it on [`pdsls`](https://pdsls.dev).
+Both notes are now in your public repo, which you can browse on [`pdsls`](https://pdsls.dev).
 
 ## your first draft
+
+Anything in your repo is public straight away, which is awkward for a half-finished note. A space is a private area of the same repo, and `publish()` copies a record out of it.
 
 > [!WARNING]
 > Spaces are experimental. They need a PDS running prerelease software: atproto's `permissioned-data` branch, or the `@atproto/pds` spaces alpha. Hosted PDSes, including `bsky.social`, do not support them yet. The API may change. `pnpm dev:pds` runs one that does support them.
@@ -128,11 +131,12 @@ const draft = await airspace.workspace.notes.create({
 })
 
 await airspace.workspace.notes.publish(draft.rkey)
+
+await airspace.workspace.supported() // check first, and hide the feature if false
 ```
 
-`await airspace.workspace.supported()` tells you whether this PDS serves spaces, so an app can hide the feature rather than fail at the first write.
+## next steps
 
-## next
-
-- [OAuth and permission sets](/docs/oauth), to write on someone else's behalf instead of using an app password.
-- [publishing your lexicons](/docs/publishing-lexicons), so other people can resolve your schemas.
+- [Your content model](/docs/model): field types, relations and singletons.
+- [Reading and writing](/docs/reading-and-writing): queries, paging, caching and live updates.
+- [OAuth and permission sets](/docs/oauth): logging in as someone else.

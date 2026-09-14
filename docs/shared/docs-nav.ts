@@ -7,6 +7,7 @@ export interface DocsPage {
 
 const pages = [
   ['index', 'getting started'],
+  ['concepts', 'atproto in five minutes'],
   ['model', 'your content model'],
   ['reading-and-writing', 'reading and writing'],
   ['spaces', 'spaces'],

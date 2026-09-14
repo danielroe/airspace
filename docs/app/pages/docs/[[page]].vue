@@ -98,7 +98,7 @@ useHead({
       </ul>
     </nav>
 
-    <article class="prose">
+    <article class="prose" :class="{ glossary: slug === 'concepts' }">
       <MarkdownDocument v-if="content" :value="content.document" />
 
       <nav class="pager" aria-label="Pagination">
@@ -200,6 +200,53 @@ useHead({
   font-weight: 500;
   margin: var(--space-lg) 0 var(--space-xs);
   scroll-margin-top: 2rem;
+}
+
+.prose.glossary {
+  max-width: var(--wide);
+}
+
+/* the parsed document renders into a single wrapper element */
+.glossary :deep(div:first-child) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: var(--space-sm);
+  align-items: start;
+}
+
+.glossary :deep(h1),
+.glossary :deep(p:not(:has(> strong:first-child))) {
+  grid-column: 1 / -1;
+}
+
+.glossary :deep(h1) {
+  margin-bottom: 0;
+}
+
+.glossary :deep(h1 + p) {
+  max-width: var(--measure-wide);
+  margin: 0 0 var(--space-sm);
+  color: var(--color-ink-2);
+  font-size: var(--text-lg);
+}
+
+.glossary :deep(p:has(> strong:first-child)) {
+  margin: 0;
+  padding: var(--space-sm);
+  border: var(--rule);
+  border-radius: var(--radius-md);
+  background: var(--color-paper-2);
+  font-size: var(--text-sm);
+  color: var(--color-ink-2);
+}
+
+.glossary :deep(p > strong:first-child) {
+  display: block;
+  margin-bottom: var(--space-2xs);
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 500;
 }
 
 .prose :deep(blockquote) {

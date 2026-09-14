@@ -1,12 +1,16 @@
 # publishing your lexicons
 
-Publishing your lexicons as `com.atproto.lexicon.schema` records lets anyone else resolve them.
+Your app works fine with lexicons that only exist in your codebase. Publish them and anyone can look up `dev.roe.project` and see what your records hold. It is also required before a [permission set](/docs/oauth#permission-sets) or a space scope can be used at login.
+
+Publishing writes each schema into your own repo as a `com.atproto.lexicon.schema` record:
 
 ```sh
 airspace lexicons publish --identity roe.dev --dry-run   # no credentials needed
 AIRSPACE_APP_PASSWORD=... airspace lexicons publish --identity roe.dev
 ```
 
-`publish` reads `./lexicons.ts` (a `defineLexicons` module) or, failing that, `./lexicons/` (JSON); `--lexicons` points it elsewhere. The authority defaults to your reversed handle (`roe.dev` becomes `dev.roe`), and only lexicons under an authority you own are written, so vendored community schemas are never republished under your DID. The command prints the plan and the `_lexicon.<domain>` TXT records third parties need.
+This reads `./lexicons.ts`, or failing that `./lexicons/`; use `--lexicons` for another path. The namespace defaults to your reversed handle, so `roe.dev` publishes `dev.roe.*`. Nothing outside your own namespace is written, so schemas copied from other people are never republished under your account.
 
-`airspace lexicons emit` writes the same schemas to disk as JSON, one file per NSID under `lexicons/`, without publishing anything.
+The command also prints the `_lexicon.<domain>` DNS TXT record to add, which proves the domain and the account have the same owner. Without it, nobody can look up your schemas.
+
+To write the same JSON to disk without publishing, run `airspace lexicons emit`.
