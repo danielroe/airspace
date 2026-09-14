@@ -12,10 +12,12 @@ useSeoMeta({
   description: 'A fully-typed, atproto-native data toolkit, turning your PDS into your content layer.',
   ogTitle: 'airspace',
   ogDescription: 'The database you already have.',
-  ogUrl: 'https://getair.space',
-  ogImage: 'https://getair.space/og.png',
+  ogUrl: `${siteUrl}/`,
+  ogImage: `${siteUrl}/og.png`,
+  ogImageWidth: 1200,
+  ogImageHeight: 630,
+  ogImageAlt: 'airspace: the database you already have',
   ogType: 'website',
-  twitterCard: 'summary_large_image',
 })
 
 useHead({

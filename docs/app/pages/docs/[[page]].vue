@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { MarkdownDocument } from '@comark/vue/components/MarkdownDocument'
 import { docsPageFor, docsPages } from '#shared/docs-nav'
+import { siteUrl } from '#shared/site'
 
 const route = useRoute()
 const slug = computed(() => (route.params.page as string | undefined) || 'index')
@@ -34,10 +35,12 @@ useSeoMeta({
   description: 'The airspace API: lexicons in TypeScript, typed reads and writes, permissioned spaces, blobs, plugins, OAuth scopes and publishing your lexicons.',
   ogTitle: title,
   ogDescription: 'The airspace API, one page at a time.',
-  ogUrl: () => `https://getair.space${page.value!.path}`,
-  ogImage: 'https://getair.space/og.png',
+  ogUrl: () => `${siteUrl}${page.value!.path}`,
+  ogImage: `${siteUrl}/og.png`,
+  ogImageWidth: 1200,
+  ogImageHeight: 630,
+  ogImageAlt: 'airspace: the database you already have',
   ogType: 'article',
-  twitterCard: 'summary_large_image',
 })
 
 // prerendered without the Nuxt runtime, so the outline highlight ships as inline script
