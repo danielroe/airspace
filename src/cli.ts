@@ -24,6 +24,7 @@ Options (lexicons publish):
   --authority <nsid>        Authority you own, repeatable (default: derived from the handle)
   --dry-run                 Show the plan without writing
   --prune                   Delete published schemas with no local definition
+  --allow-private-network   Let the identity resolve to a local or http: PDS
   --help
 
 Environment:
@@ -47,6 +48,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
       'authority': { type: 'string', multiple: true },
       'dry-run': { type: 'boolean', default: false },
       'prune': { type: 'boolean', default: false },
+      'allow-private-network': { type: 'boolean', default: false },
       'help': { type: 'boolean', short: 'h', default: false },
     },
   })
@@ -77,7 +79,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
     return 1
   }
 
-  const identity = await resolveIdentity(values.identity)
+  const identity = await resolveIdentity(values.identity, { allowPrivateNetwork: values['allow-private-network'] })
   const authorities = values.authority?.length
     ? values.authority
     : identity.handle ? [authorityDomain(identity.handle)] : []

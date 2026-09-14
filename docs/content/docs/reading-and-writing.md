@@ -62,6 +62,8 @@ await airspace.resolve(uri, projects) // typed and validated, null when it does 
 await airspace.resolve(uri) // any repo, any space, `value` is `unknown`
 ```
 
+The authority of a URI must be a DID or a handle, and a `did:web` host or PDS endpoint it resolves to must be a public `https:` origin. Pass `allowPrivateNetwork: true` to `createAirspace` for a local or `http:` PDS; a `service` given directly in `identity` is never checked.
+
 ## listing and paging
 
 Records come back newest first, since the default record key is a timestamp. Pass `sort` for any other order.

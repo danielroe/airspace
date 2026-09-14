@@ -9,7 +9,7 @@ export type { CollectionClient, KeyedCollection, MigrateOptions, MigrateReport, 
 export type { BlobLike, ImageLike, ImageSource, ResolvedImage } from './community.ts'
 export { resolveImage } from './community.ts'
 export { AirspaceError, ConflictError, ScopeError, SpacesUnsupportedError, ValidationError } from './errors.ts'
-export type { IdentityInput } from './identity.ts'
+export type { IdentityInput, ResolveOptions } from './identity.ts'
 export type { AnyCollection, AnySpace, BaseCollections, BelongsTo, Collection, CollectionOptions, CollectionPlugins, CollectionSchema, CollectionsFrom, CollectionsSpec, HasMany, NoRelations, Relation, Relations, Space, SpaceDeclaration, SpaceOptions } from './model.ts'
 export { belongsTo, defineCollection, defineCollections, defineSpace, hasMany } from './model.ts'
 export type { LexiconPermission, PermissionSetDeclaration } from './permissions.ts'

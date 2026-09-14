@@ -86,6 +86,26 @@ describe('defineSpace', () => {
       rkey: 'abc',
     })
     expect(parseAtUri('at://did:plc:a/space/dev.example.workspace/self').space).toEqual({ type: 'dev.example.workspace', skey: 'self' })
+    expect(parseAtUri('at://alice.example.com/dev.example.project/abc').authority).toBe('alice.example.com')
+  })
+
+  it('rejects an authority that is not a DID or a handle, and any malformed segment', () => {
+    for (const uri of [
+      'at://did:plc:foo#frag/dev.example.project/abc',
+      'at://did:plc:foo?x=1/dev.example.project/abc',
+      'at://user name/dev.example.project/abc',
+      'at://localhost:8443/dev.example.project/abc',
+      'at://127.0.0.1/dev.example.project/abc',
+      'at://did:plc:foo//dev.example.project',
+      'at://did:plc:foo/dev.example.project/abc/extra',
+      'at://did:plc:foo/not-an-nsid/abc',
+      'at://did:plc:foo/dev.example.project/has space',
+      'at://did:plc:foo/dev.example.project/..',
+      'at://did:plc:a/space/dev.example.workspace/self/not-a-did/dev.example.project/abc',
+      'at://did:plc:a/space/dev.example.workspace/self/did:plc:b/dev.example.project/abc/extra',
+    ]) {
+      expect(() => parseAtUri(uri), uri).toThrow(/malformed|not an at:\/\/ URI/)
+    }
   })
 })
 

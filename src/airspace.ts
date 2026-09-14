@@ -20,7 +20,7 @@ import { uploadBlob } from './blob.ts'
 import { createCollectionClient } from './client.ts'
 import { resolveImage } from './community.ts'
 import { AirspaceError } from './errors.ts'
-import { resolveIdentity } from './identity.ts'
+import { isDid, resolveIdentity } from './identity.ts'
 import { stub } from './type-model.ts'
 
 /** The part of an [unstorage](https://unstorage.unjs.io) driver a cache needs. */
@@ -61,6 +61,8 @@ export interface AirspaceOptions<C extends Record<string, AnyCollection>, S exte
   session?: Agent | AgentOptions
   /** Cache reads in memory. Off by default; identical in-flight requests are always shared. */
   cache?: CacheOptions
+  /** Let any resolved identity live on a loopback, private or `http:` address. A `service` given directly in `identity` is never checked. */
+  allowPrivateNetwork?: boolean
 }
 
 export type CollectionClients<C extends Record<string, AnyCollection>, G = Record<never, never>> = {
@@ -157,10 +159,11 @@ export function createAirspace<
   const storage = options.cache?.storage
   if (storage && !(ttl > 0))
     throw new AirspaceError('cache.storage needs a ttl above 0')
+  const network = { allowPrivateNetwork: options.allowPrivateNetwork }
   const keyOf = new WeakMap<Backend, string>()
 
   const runtime = once(async (): Promise<Runtime> => {
-    const identity = await resolveIdentity(options.identity)
+    const identity = await resolveIdentity(options.identity, network)
     const session = options.session ? new Client(options.session) : undefined
     const backend = createPublicBackend({ repo: identity.did, service: identity.service, read: publicClient(identity.service), write: session })
     keyOf.set(backend, 'public')
@@ -217,9 +220,13 @@ export function createAirspace<
     if (author === rt.identity.did)
       return rt.public
     return backend(author, async () => {
-      const foreign = (service: string): Backend => createPublicBackend({ repo: author, service, read: publicClient(service) })
+      const foreign = (repo: DidString, service: string): Backend => createPublicBackend({ repo, service, read: publicClient(service) })
+      if (!isDid(author)) {
+        const resolved = await resolveIdentity(author, network)
+        return foreign(resolved.did, resolved.service)
+      }
       // Most refs point at an account on the same PDS, so try that before resolving an identity.
-      return withRepoFallback(foreign(rt.identity.service), async () => foreign((await resolveIdentity({ did: author })).service))
+      return withRepoFallback(foreign(author, rt.identity.service), async () => foreign(author, (await resolveIdentity({ did: author }, network)).service))
     })
   }
 

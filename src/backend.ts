@@ -4,6 +4,7 @@ import type { DidString, RecordSchema } from '@atproto/lex-schema'
 import { XrpcResponseError } from '@atproto/lex-client'
 import { blobUrl, cidFromBlob } from './blob.ts'
 import { AirspaceError, ConflictError, ScopeError } from './errors.ts'
+import { isDid, isHandle } from './identity.ts'
 
 export interface RawRecord {
   uri: string
@@ -121,7 +122,12 @@ export function spaceUri(authority: DidString, type: string, skey: string): Spac
   return `at://${authority}/space/${type}/${skey}`
 }
 
-/** Parse a public or space AT URI. */
+const NSID = /^[a-z][a-z0-9-]{0,62}(?:\.[a-z0-9][a-z0-9-]{0,62})+\.[a-z][a-z0-9]{0,62}$/i
+const RKEY = /^(?!\.\.?$)[\w.:~-]{1,512}$/
+
+const malformed = (uri: string, what: string): AirspaceError => new AirspaceError(`malformed at:// URI (${what}): ${uri}`)
+
+/** Parse a public or space AT URI, throwing on any malformed part. */
 export function parseAtUri(uri: string): {
   authority: DidString
   space?: { type: string, skey: string }
@@ -129,19 +135,40 @@ export function parseAtUri(uri: string): {
   collection?: string
   rkey?: string
 } {
-  const m = /^at:\/\/([^/]+)(?:\/(.*))?$/.exec(uri)
-  if (!m)
+  const m = /^at:\/\/([^/?#]+)(?:\/(.*))?$/.exec(uri)
+  if (!m || uri.length > 8192)
     throw new AirspaceError(`not an at:// URI: ${uri}`)
-  const authority = m[1] as DidString
-  const parts = m[2] ? m[2].split('/') : []
-  if (parts[0] === 'space') {
-    const [, type, skey, author, collection, rkey] = parts
-    if (!type || !skey)
-      throw new AirspaceError(`malformed space URI: ${uri}`)
-    return { authority, space: { type, skey }, author: author as DidString | undefined, collection, rkey }
+  const authority = m[1]!
+  if (!isDid(authority) && !isHandle(authority))
+    throw malformed(uri, 'authority')
+  const parts = m[2] === undefined ? [] : m[2].split('/')
+  if (parts.some(part => !part))
+    throw malformed(uri, 'empty segment')
+  const collectionAt = (index: number): string | undefined => {
+    const collection = parts[index]
+    if (collection !== undefined && !NSID.test(collection))
+      throw malformed(uri, 'collection')
+    return collection
   }
-  const [collection, rkey] = parts
-  return { authority, author: authority, collection, rkey }
+  const rkeyAt = (index: number): string | undefined => {
+    const rkey = parts[index]
+    if (rkey !== undefined && !RKEY.test(rkey))
+      throw malformed(uri, 'rkey')
+    return rkey
+  }
+  if (parts[0] === 'space') {
+    if (parts.length > 6)
+      throw malformed(uri, 'too many segments')
+    const [, type, skey, author] = parts
+    if (!type || !skey || !NSID.test(type) || !RKEY.test(skey))
+      throw new AirspaceError(`malformed space URI: ${uri}`)
+    if (author !== undefined && !isDid(author))
+      throw malformed(uri, 'author')
+    return { authority: authority as DidString, space: { type, skey }, author: author as DidString | undefined, collection: collectionAt(4), rkey: rkeyAt(5) }
+  }
+  if (parts.length > 2)
+    throw malformed(uri, 'too many segments')
+  return { authority: authority as DidString, author: authority as DidString, collection: collectionAt(0), rkey: rkeyAt(1) }
 }
 
 /**
