@@ -1,4 +1,5 @@
 import type { NodeOAuthClient, NodeSavedSessionStore, NodeSavedStateStore, OAuthClientMetadataInput, OAuthSession } from '@atproto/oauth-client-node'
+import { AirspaceError } from './errors.ts'
 
 export type { NodeSavedSession, NodeSavedSessionStore, NodeSavedState, NodeSavedStateStore, OAuthSession } from '@atproto/oauth-client-node'
 
@@ -28,8 +29,8 @@ export interface OAuth {
   /** Serve at `metadataPath`. */
   readonly metadata: OAuthClientMetadataInput
   readonly client: NodeOAuthClient
-  /** URL to redirect the user to. */
-  authorize: (identifier: string, options?: { state?: string }) => Promise<URL>
+  /** URL to redirect the user to. `scopes` must be a subset of the client's. */
+  authorize: (identifier: string, options?: { state?: string, scopes?: readonly string[] }) => Promise<URL>
   /** The session works as `createAirspace({ session })`. */
   callback: (params: URLSearchParams) => Promise<{ session: OAuthSession, did: string, state: string | null }>
   restore: (did: string) => Promise<OAuthSession>
@@ -95,7 +96,13 @@ export async function createOAuth(options: OAuthOptions): Promise<OAuth> {
   return {
     metadata,
     client,
-    authorize: (identifier, opts) => client.authorize(identifier, { scope: metadata.scope, state: opts?.state }),
+    async authorize(identifier, opts) {
+      const scopes = opts?.scopes ?? options.scopes
+      const unknown = scopes.find(scope => !options.scopes.includes(scope))
+      if (unknown)
+        throw new AirspaceError(`"${unknown}" is not among the client's scopes`)
+      return client.authorize(identifier, { scope: scopes.join(' '), state: opts?.state })
+    },
     async callback(params) {
       const { session, state } = await client.callback(params)
       return { session, did: session.did, state }
