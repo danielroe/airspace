@@ -76,7 +76,7 @@ type SpaceCollectionClients<C extends Record<string, AnyCollection>, G> = {
 interface SpaceClientBase<C extends Record<string, AnyCollection>, G> {
   /** `at://{authority}/space/{type}/{skey}` */
   uri: () => Promise<SpaceUri>
-  /** Does the PDS serve permissioned spaces? One probe per PDS, cached for the life of this client. */
+  /** Does the PDS serve permissioned spaces? One probe per PDS, cached for the life of this client. Needs no session. */
   supported: () => Promise<boolean>
   readonly collections: SpaceCollectionClients<C, G>
   /** Several writes in one commit, validated before anything is sent. */
@@ -187,13 +187,11 @@ export function createAirspace<
     return pending
   }
   const support = new Map<string, Promise<boolean>>()
-  const spacesSupported = async (uri: SpaceUri): Promise<boolean> => {
+  const spacesSupported = async (): Promise<boolean> => {
     const [rt, lib] = await Promise.all([runtime(), spaceLib()])
-    if (!rt.session)
-      throw readOnly('probe for spaces')
     let pending = support.get(rt.identity.service)
     if (!pending) {
-      support.set(rt.identity.service, pending = lib.probeSpaces(rt.session, uri).catch((err) => {
+      support.set(rt.identity.service, pending = lib.probeSpaces(rt.identity.service).catch((err) => {
         support.delete(rt.identity.service)
         throw err
       }))
@@ -201,14 +199,14 @@ export function createAirspace<
     return pending
   }
 
-  const spaceClient = async (uri: SpaceUri): Promise<Client | undefined> => {
+  const spaceClient = async (): Promise<Client | undefined> => {
     const [rt, lib] = await Promise.all([runtime(), spaceLib()])
-    return rt.session && lib.guardSpaces(rt.session, rt.identity.service, () => spacesSupported(uri))
+    return rt.session && lib.guardSpaces(rt.session, rt.identity.service, spacesSupported)
   }
 
   const spaceBackend = (uri: SpaceUri, author: DidString): Promise<Backend> => backend(`${uri}|${author}`, async () => {
     const [rt, lib] = await Promise.all([runtime(), spaceLib()])
-    return lib.createSpaceBackend({ space: uri, repo: author, service: rt.identity.service, client: await spaceClient(uri) })
+    return lib.createSpaceBackend({ space: uri, repo: author, service: rt.identity.service, client: await spaceClient() })
   })
 
   const backendFor = async (uri: string): Promise<Backend> => {
@@ -321,7 +319,7 @@ export function createAirspace<
     const authority = async (): Promise<DidString> => def.authority === 'self' ? (await identity()).did : def.authority
     const uri = async () => spaceUri(await authority(), def.type, def.skey)
     const backend = async () => spaceBackend(await uri(), (await identity()).did)
-    const manager = once(async () => (await spaceLib()).createSpaceManager(def, await authority(), scopedClient(await spaceClient(await uri()))))
+    const manager = once(async () => (await spaceLib()).createSpaceManager(def, await authority(), scopedClient(await spaceClient())))
     const repo: Repo = {
       key: `space:${def.type}/${def.skey}/${def.authority}`,
       backend,
@@ -333,7 +331,7 @@ export function createAirspace<
     const attached = collect(def.collections, repo)
     const base: SpaceClientBase<SpaceCollections<T>, G> = {
       uri,
-      supported: async () => spacesSupported(await uri()),
+      supported: spacesSupported,
       collections: {} as SpaceCollectionClients<SpaceCollections<T>, G>,
       batch: createBatch(attached, backend),
       manage: {
