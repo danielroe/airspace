@@ -21,6 +21,15 @@ describe('scopesFor', () => {
     expect(scopesFor({ collections: [projects] })).toEqual(['atproto', 'repo:dev.example.project'])
   })
 
+  it('asks for the manage actions the app needs on its own spaces', () => {
+    expect(scopesFor({ spaces: { workspace }, manage: ['create', 'delete'] })).toEqual([
+      'atproto',
+      'space:dev.example.workspace?skey=self&collection=dev.example.location&manage=create&manage=delete',
+    ])
+    const foreign = defineSpace({ nsid: 'dev.example.workspace', key: 'literal:self' }, { authority: 'did:plc:someoneelse', collections: { projects } })
+    expect(scopesFor({ spaces: { foreign }, manage: ['delete'] })[1]).not.toContain('manage=')
+  })
+
   it('narrows blob scope to the accepted MIME patterns, behind a ref thunk', () => {
     expect(scopesFor({ collections: [defineCollection(gallery)] })).toContain('blob:image/*')
     expect(scopesFor({ collections: [categories] }).some(s => s.startsWith('blob:'))).toBe(false)
