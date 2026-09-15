@@ -79,8 +79,17 @@ interface Migrates<S extends RecordSchema, M> {
   migrate: (transform: (value: Value<S>, record: AirspaceRecord<S, M>) => RecordInput<S>, options?: MigrateOptions) => Promise<MigrateReport>
 }
 
+/** The same collection somewhere else: `get` pins the schema, `put` is what `publish` calls. */
+export type PublishTarget<S extends RecordSchema> = IsSingleton<S> extends true
+  ? { get: () => Promise<AirspaceRecord<S, any> | null>, put: (value: RecordInput<S>, options?: SpaceWriteOptions) => Promise<WriteResult<S>> }
+  : { get: (rkey: InferRecordKey<S>) => Promise<AirspaceRecord<S, any> | null>, put: (rkey: InferRecordKey<S>, value: RecordInput<S>, options?: SpaceWriteOptions) => Promise<WriteResult<S>> }
+
 export interface PublishOptions<S extends RecordSchema> extends WriteOptions {
-  /** Adjust the value on its way into the public repo. */
+  /** Where to write. Defaults to the public repo. A space takes no `ifMatch`, so it is ignored there. */
+  to?: PublishTarget<S>
+  /** Delete the draft once written. Two calls, so a failure between them leaves both. */
+  move?: boolean
+  /** Adjust the value on its way over. */
   transform?: (value: Value<S>) => RecordInput<S>
 }
 
@@ -364,13 +373,22 @@ export function createCollectionClient<S extends RecordSchema, R extends Relatio
   async function publish(...args: [] | [PublishOptions<S>] | [string] | [string, PublishOptions<S>]): Promise<WriteResult<S>> {
     const rkey = typeof args[0] === 'string' ? args[0] : fixedRkey!
     const options = (typeof args[0] === 'string' ? args[1] : args[0]) ?? {}
+    const target = (options.to ?? ctx.publishTarget!(collection)) as unknown as AnyClient
+    // Lexicon objects are open, so a value of one collection can validate in another: the type on `to` is not enough.
+    if (target[INTERNAL].schema.$type !== schema.$type)
+      throw new AirspaceError(`${context(rkey)} cannot be published into ${target[INTERNAL].schema.$type}`)
     const draft = await get(rkey)
     if (!draft)
       throw new AirspaceError(`${context(rkey)} not found in ${(await ctx.backend()).location}`)
     const { $type, ...value } = draft.value as Record<string, unknown>
     const next = options.transform ? options.transform(draft.value) : value as RecordInput<S>
-    const target = ctx.publishTarget!(collection) as unknown as KeyedCollection<S, R>
-    return await target.put(rkey as InferRecordKey<S>, next, { ifMatch: options.ifMatch })
+    const write = { ifMatch: options.ifMatch, ifChanged: options.ifChanged }
+    const result = collection.singleton
+      ? await (target as unknown as SingletonCollection<S, R>).put(next, write)
+      : await (target as unknown as KeyedCollection<S, R>).put(rkey as InferRecordKey<S>, next, write)
+    if (options.move)
+      await del(rkey)
+    return result
   }
 
   async function published(): Promise<string[]> {

@@ -16,6 +16,9 @@ await airspace.workspace.projects.publish(draft.rkey) // copies to the public re
 await airspace.workspace.projects.publish(draft.rkey, { transform: value => ({ ...value, publishedAt: now }) })
 await airspace.workspace.projects.publish(draft.rkey, { ifMatch: draft.cid })
 
+await airspace.workspace.projects.publish(draft.rkey, { move: true }) // and drop the draft
+await airspace.workspace.projects.publish(draft.rkey, { to: airspace.review.projects }) // into another space instead
+await airspace.projects.delete(draft.rkey) // unpublish
 const live = await airspace.workspace.projects.published() // keys that exist in both
 await airspace.workspace.supported() // false on most PDSes today
 ```
