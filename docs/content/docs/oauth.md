@@ -63,3 +63,5 @@ scopesFor({ collections: { projects, categories }, include: [lexicons.authFull] 
 Someone else's set works too, by name: `include: ['site.standard.authFull']`. File permissions are never part of a set, so a `blob:` scope is added alongside.
 
 A set must be [published](/docs/publishing-lexicons) before anyone can ask for it, as must a `space:` scope. Until then, `authorize()` fails with `invalid_scope: Could not resolve Lexicon for NSID`. While developing, list your collections instead.
+
+A `space:` scope also fails the whole login on a PDS that does not serve spaces. Check [`supported()`](/docs/spaces) first, it needs no session, and leave `spaces` out of `scopesFor()` when it is false.

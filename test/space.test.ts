@@ -1,6 +1,5 @@
 import type { AirspaceRecord, Infer, Plain } from '../src/index.ts'
 import type { TestPds } from './pds.ts'
-import { XrpcResponseError } from '@atproto/lex-client'
 import { l as lex } from '@atproto/lex-schema'
 import { afterAll, afterEach, beforeAll, describe, expect, expectTypeOf, it, vi } from 'vitest'
 import { belongsTo, ConflictError, createAirspace, defineCollection, defineSpace, parseAtUri, ScopeError, SpacesUnsupportedError, ValidationError } from '../src/index.ts'
@@ -394,10 +393,25 @@ describe('space support', () => {
     expect(calls.filter(call => call === 'com.atproto.simplespace.getSpace')).toHaveLength(1)
   })
 
-  it.each(['MethodNotImplemented', 'AuthMissing', 'UpstreamFailure'])('does not read %s as an answer from the space domain', async (error) => {
-    const status = error === 'AuthMissing' ? 401 : 501
-    const client = { call: () => Promise.reject(new XrpcResponseError(com.atproto.simplespace.getSpace as never, new Response(null, { status }), { encoding: 'application/json', body: { error, message: error } })) }
-    await expect(probeSpaces(client as never, 'at://did:plc:a/space/dev.example.workspace/self')).resolves.toBe(false)
+  it.each([
+    [401, { error: 'AuthMissing', message: 'Authentication Required' }],
+    [501, { error: 'MethodNotImplemented', message: 'Method Not Implemented' }],
+    [502, { error: 'UpstreamFailure', message: 'Upstream service unreachable' }],
+    // a PDS with no appview configured refuses unknown methods before auth, with the same status a spaces PDS uses
+    [400, { error: 'InvalidRequest', message: 'No service configured for com.atproto.simplespace.getSpace' }],
+    [400, null],
+  ])('does not read %s %o as an answer from the space domain', async (status, body) => {
+    vi.stubGlobal('fetch', () => Promise.resolve(new Response(body && JSON.stringify(body), { status })))
+    await expect(probeSpaces(pds.service)).resolves.toBe(false)
+  })
+
+  it('answers without a session', async () => {
+    const { account } = await setup()
+    const readOnly = createAirspace({ identity: { did: account.did, service: pds.service }, spaces: { workspace } })
+    expect(await readOnly.workspace.supported()).toBe(true)
+    hideSpaces()
+    const hidden = createAirspace({ identity: { did: account.did, service: pds.service }, spaces: { workspace } })
+    expect(await hidden.workspace.supported()).toBe(false)
   })
 
   it('reports a PDS without spaces rather than passing on its XRPC error', async () => {

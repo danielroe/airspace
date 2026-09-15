@@ -1,4 +1,3 @@
-import { Client } from '@atproto/lex-client'
 import { describe, expect, it } from 'vitest'
 import { createAirspace, defineCollection } from '../src/index.ts'
 import { invalidateOn, subscribe } from '../src/live.ts'
@@ -42,10 +41,8 @@ describe.skipIf(!live)('a hosted pds', () => {
   }, 30_000)
 
   it('reports no permissioned spaces on a pds that does not serve them', async () => {
-    for (const service of ['https://bsky.social', NPMX]) {
-      const client = new Client({ service, fetch: (input, init) => fetch(input, init) })
-      expect(await probeSpaces(client, `at://${DANIEL}/space/dev.roe.workspace/self`)).toBe(false)
-    }
+    for (const service of ['https://bsky.social', NPMX])
+      expect(await probeSpaces(service)).toBe(false)
   }, 30_000)
 })
 

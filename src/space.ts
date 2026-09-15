@@ -8,21 +8,19 @@ import { isNotFound, PAGE, paginate, readOnly, scoped, spaceUri } from './backen
 import { cidFromBlob } from './blob.ts'
 import { SpacesUnsupportedError, ValidationError } from './errors.ts'
 import { com } from './lex/index.ts'
+import { boundedJson, FETCH_TIMEOUT } from './network.ts'
 
-// Either error means the method exists; a PDS without spaces proxies the unknown method and answers `UpstreamFailure`.
-const SPACE_ANSWERS: ReadonlySet<string> = new Set(['SpaceNotFound', 'InvalidRequest'])
-
-/** Does this PDS serve permissioned spaces? One `getSpace` call, which needs a session. */
-export async function probeSpaces(client: Client, space: SpaceUri): Promise<boolean> {
-  try {
-    await client.call(com.atproto.simplespace.getSpace, { space })
-    return true
-  }
-  catch (err) {
-    if (err instanceof XrpcResponseError)
-      return SPACE_ANSWERS.has(err.error)
-    throw err
-  }
+/**
+ * Does this PDS serve permissioned spaces? No session needed: XRPC validates params before auth,
+ * so a spaces PDS answers 400 naming the missing `space` param. A stock PDS answers 401 or proxies
+ * upstream, but with no appview configured it also answers 400 before auth, so the status alone is not enough.
+ */
+export async function probeSpaces(service: string): Promise<boolean> {
+  const res = await fetch(new URL('/xrpc/com.atproto.simplespace.getSpace', service), { signal: AbortSignal.timeout(FETCH_TIMEOUT) })
+  if (res.status !== 400)
+    return false
+  const body = await boundedJson<{ message?: unknown } | null>(res).catch(() => null)
+  return typeof body?.message === 'string' && body.message.includes('"space"')
 }
 
 /** A client that reports a failing space call as `SpacesUnsupportedError` when the PDS has no spaces. */
@@ -37,7 +35,7 @@ export function guardSpaces(client: Client, service: string, supported: () => Pr
           return await (value as Client['call']).apply(target, args)
         }
         catch (err) {
-          // A refused credential says nothing about space support, and the probe would be refused too.
+          // A refused credential says nothing about space support.
           const auth = err instanceof XrpcResponseError && (err.status === 401 || err.status === 403)
           if (err instanceof XrpcResponseError && !auth && !await supported())
             throw new SpacesUnsupportedError(service, { cause: err })
