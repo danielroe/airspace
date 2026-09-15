@@ -1,9 +1,13 @@
 import type { AnyCollection, AnySpace } from './model.ts'
 import type { PermissionSetDeclaration } from './permissions.ts'
 
+export type SpaceManageAction = 'create' | 'update' | 'delete'
+
 export interface ScopesInput {
   collections?: Record<string, AnyCollection> | readonly AnyCollection[]
   spaces?: Record<string, AnySpace> | readonly AnySpace[]
+  /** On own-authority spaces. Default `['create']`; `manage.update()` / `manage.delete()` need theirs too. */
+  manage?: readonly SpaceManageAction[]
   /**
    * Permission sets to request as `include:<nsid>`: a `permissions()` def from
    * your own model, or the NSID of someone else's.
@@ -34,8 +38,9 @@ export function scopesFor(input: ScopesInput): string[] {
       if (!declared.has(c.nsid))
         params.append('collection', c.nsid)
     }
-    if (s.authority === 'self')
-      params.append('manage', 'create')
+    if (s.authority === 'self') {
+      for (const action of input.manage ?? ['create']) params.append('manage', action)
+    }
     const query = params.toString()
     scopes.push(`space:${s.type}${query ? `?${query}` : ''}`)
   }

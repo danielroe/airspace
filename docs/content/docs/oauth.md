@@ -23,6 +23,13 @@ Then wire up three things:
 
 File scopes match the types your blob fields accept, so a model that only accepts `image/*` asks for `blob:image/*`, not `blob:*/*`.
 
+A space of your own is asked for with `manage=create`, enough to write into it before it exists. Pass `manage` to ask for more, such as letting `manage.delete()` tear it down:
+
+```ts
+scopesFor({ spaces: { workspace }, manage: ['create', 'delete'] })
+// ['atproto', 'space:dev.roe.workspace?skey=self&manage=create&manage=delete']
+```
+
 ## against a local PDS
 
 Handle and account lookups go to DNS and `plc.directory`, neither of which knows about a local account such as `alice.test`. Point both at your development network:
