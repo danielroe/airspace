@@ -1,0 +1,37 @@
+name: deploy-pds
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'demo-pds/**'
+      - '.github/workflows/deploy-pds.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-pds
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ !github.event.repository.fork }}
+    runs-on: ubuntu-latest
+    environment: fly
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1 # 1.6
+
+      - name: 🛰️ Deploy the demo PDS
+        run: flyctl deploy --remote-only
+        working-directory: demo-pds
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: 🩺 Check it came back up
+        run: curl --fail --retry 10 --retry-delay 5 --retry-all-errors https://pds.demo.getair.space/xrpc/_health

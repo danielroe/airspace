@@ -9,4 +9,5 @@ examples/*/.astro
 examples/*/.svelte-kit
 examples/*/build
 .env
+demo-pds/data
 .vercel
