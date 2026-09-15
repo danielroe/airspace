@@ -18,7 +18,7 @@ const oauth = await createOAuth({
 Then wire up three things:
 
 1. Serve `oauth.metadata` at `/oauth-client-metadata.json`, which is how the user's PDS identifies your app.
-2. Redirect the user to `await oauth.authorize(handle)`.
+2. Redirect the user to `await oauth.authorize(handle)`. Pass `scopes` (a subset of the client's) to ask for less up front and the rest in a later consent.
 3. On return, read the session with `await oauth.callback(params)` and pass it to `createAirspace({ session })`.
 
 File scopes match the types your blob fields accept, so a model that only accepts `image/*` asks for `blob:image/*`, not `blob:*/*`.

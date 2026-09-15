@@ -92,6 +92,23 @@ describe('createOAuth', () => {
     await expect(oauth.restore('did:plc:nobody')).rejects.toThrow()
   })
 
+  it('narrows a consent to a subset of the declared scopes, never beyond', async () => {
+    const all = scopesFor({ collections: [projects], spaces: [workspace] })
+    const oauth = await createOAuth({
+      baseUrl: 'https://roe.dev',
+      redirectPath: '/cb',
+      name: 'test',
+      scopes: all,
+      stores: { session: { get: async () => undefined, set: async () => {}, del: async () => {} } },
+    })
+    const spy = vi.spyOn(oauth.client, 'authorize').mockResolvedValue(new URL('https://pds.example/authorize'))
+    await oauth.authorize('alice.test', { scopes: ['atproto', 'repo:dev.example.project'] })
+    expect(spy).toHaveBeenCalledWith('alice.test', { scope: 'atproto repo:dev.example.project', state: undefined })
+    await oauth.authorize('alice.test')
+    expect(spy).toHaveBeenLastCalledWith('alice.test', { scope: all.join(' '), state: undefined })
+    await expect(oauth.authorize('alice.test', { scopes: ['atproto', 'repo:dev.example.other'] })).rejects.toThrow(`"repo:dev.example.other" is not among the client's scopes`)
+  })
+
   it('resolves identities where it is told to, so a local PDS works', async () => {
     const oauth = await createOAuth({
       baseUrl: 'http://127.0.0.1:3000',
