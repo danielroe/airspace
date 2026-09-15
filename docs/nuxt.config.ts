@@ -60,6 +60,7 @@ export default defineNuxtConfig({
       { baseName: 'content', dir: './content' },
       { baseName: 'demoRoutes', dir: './server/api/demo' },
       { baseName: 'demoShared', dir: './shared' },
+      { baseName: 'demoProxy', dir: './server/routes/xrpc' },
     ],
   },
   compatibilityDate: '2026-09-01',
