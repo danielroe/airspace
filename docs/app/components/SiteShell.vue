@@ -38,7 +38,7 @@ useHead({
           </NuxtLink>
         </p>
         <nav>
-          <DocsSearch v-if="route.path.startsWith('/docs')" />
+          <DocsSearch />
           <NuxtLink to="/docs">
             docs
           </NuxtLink>
