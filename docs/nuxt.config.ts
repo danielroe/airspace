@@ -38,8 +38,6 @@ export default defineNuxtConfig({
   },
   routeRules: {
     '/': { noScripts: true },
-    '/docs': { noScripts: true },
-    '/docs/**': { noScripts: true },
     '/demo/**': { prerender: false },
   },
   nitro: {
