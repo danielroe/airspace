@@ -76,7 +76,7 @@ type SpaceCollectionClients<C extends Record<string, AnyCollection>, G> = {
 interface SpaceClientBase<C extends Record<string, AnyCollection>, G> {
   /** `at://{authority}/space/{type}/{skey}` */
   uri: () => Promise<SpaceUri>
-  /** Does the PDS serve permissioned spaces? One probe per PDS, cached for the life of this client. Needs no session. */
+  /** Does the PDS serve permissioned spaces? No session needed. One probe per PDS, cached for the life of this client. */
   supported: () => Promise<boolean>
   readonly collections: SpaceCollectionClients<C, G>
   /** Several writes in one commit, validated before anything is sent. */
@@ -171,6 +171,7 @@ export function createAirspace<
   })
   const identity = async () => (await runtime()).identity
   const spaceLib = once(() => import('./space.ts'))
+  const supportLib = once(() => import('./supported.ts'))
 
   const backends = new Map<string, Promise<Backend>>()
   const backend = (key: string, create: () => Promise<Backend>): Promise<Backend> => {
@@ -188,10 +189,10 @@ export function createAirspace<
   }
   const support = new Map<string, Promise<boolean>>()
   const spacesSupported = async (): Promise<boolean> => {
-    const [rt, lib] = await Promise.all([runtime(), spaceLib()])
+    const [rt, lib] = await Promise.all([runtime(), supportLib()])
     let pending = support.get(rt.identity.service)
     if (!pending) {
-      support.set(rt.identity.service, pending = lib.probeSpaces(rt.identity.service).catch((err) => {
+      support.set(rt.identity.service, pending = lib.spacesSupported(rt.identity.service).catch((err) => {
         support.delete(rt.identity.service)
         throw err
       }))

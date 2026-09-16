@@ -64,4 +64,11 @@ Someone else's set works too, by name: `include: ['site.standard.authFull']`. Fi
 
 A set must be [published](/docs/publishing-lexicons) before anyone can ask for it, as must a `space:` scope. Until then, `authorize()` fails with `invalid_scope: Could not resolve Lexicon for NSID`. While developing, list your collections instead.
 
-A `space:` scope also fails the whole login on a PDS that does not serve spaces. Check [`supported()`](/docs/spaces) first, it needs no session, and leave `spaces` out of `scopesFor()` when it is false.
+A `space:` scope also fails the login on a PDS that does not serve spaces. `spacesSupported()` can tell if a PDS supports spaces before signing in, so make sure you leave `spaces` out of `scopesFor()` when it is false:
+
+```ts
+import { spacesSupported } from 'airspace/oauth'
+
+const spaces = await spacesSupported(service) ? { workspace } : undefined
+scopesFor({ collections: { projects, categories }, spaces })
+```
