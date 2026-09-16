@@ -63,3 +63,12 @@ scopesFor({ collections: { projects, categories }, include: [lexicons.authFull] 
 Someone else's set works too, by name: `include: ['site.standard.authFull']`. File permissions are never part of a set, so a `blob:` scope is added alongside.
 
 A set must be [published](/docs/publishing-lexicons) before anyone can ask for it, as must a `space:` scope. Until then, `authorize()` fails with `invalid_scope: Could not resolve Lexicon for NSID`. While developing, list your collections instead.
+
+A `space:` scope also fails the login on a PDS that does not serve spaces. `spacesSupported()` can tell if a PDS supports spaces before signing in, so make sure you leave `spaces` out of `scopesFor()` when it is false:
+
+```ts
+import { spacesSupported } from 'airspace/oauth'
+
+const spaces = await spacesSupported(service) ? { workspace } : undefined
+scopesFor({ collections: { projects, categories }, spaces })
+```

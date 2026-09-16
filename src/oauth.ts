@@ -1,5 +1,6 @@
 import type { NodeOAuthClient, NodeSavedSessionStore, NodeSavedStateStore, OAuthClientMetadataInput, OAuthSession } from '@atproto/oauth-client-node'
 
+export { spacesSupported } from './supported.ts'
 export type { NodeSavedSession, NodeSavedSessionStore, NodeSavedState, NodeSavedStateStore, OAuthSession } from '@atproto/oauth-client-node'
 
 export interface OAuthOptions {
