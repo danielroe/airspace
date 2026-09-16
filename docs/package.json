@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "nuxt dev",
-    "build": "node scripts/build-with-search.ts build",
-    "generate": "node scripts/build-with-search.ts generate",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
     "preview": "nuxt preview",
     "check:links": "node scripts/check-links.ts",
     "postinstall": "nuxt prepare"
@@ -13,7 +13,6 @@
   "dependencies": {
     "@comark/vue": "^0.7.0",
     "@nuxt/fonts": "https://pkg.pr.new/@nuxt/fonts@35924e7",
-    "@pagefind/default-ui": "1.5.2",
     "airspace": "workspace:*",
     "comark": "^0.7.0",
     "nitro": "3.0.260903-beta",
