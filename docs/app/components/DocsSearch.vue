@@ -1,117 +1,34 @@
 <script setup lang="ts">
-import '@pagefind/default-ui/css/ui.css'
-
 const isDevelopment = import.meta.dev
-const baseURL = useRuntimeConfig().app.baseURL
+const base = useRuntimeConfig().app.baseURL.replace(/\/$/, '')
 
-const trigger = useTemplateRef<HTMLButtonElement>('trigger')
-const dialog = useTemplateRef<HTMLDialogElement>('dialog')
-const search = useTemplateRef<HTMLElement>('search')
-const isApplePlatform = ref(false)
-const isLoading = ref(false)
-const loadFailed = ref(false)
-
-let initialized = false
-
-function pagefindBundlePath() {
-  return `${baseURL.replace(/\/$/, '')}/pagefind/`
-}
-
-async function loadSearch() {
-  if (isDevelopment || initialized || isLoading.value)
-    return
-
-  isLoading.value = true
-  loadFailed.value = false
-
-  try {
-    await nextTick()
-    const { PagefindUI } = await import('@pagefind/default-ui')
-    if (!search.value)
-      return
-
-    new PagefindUI({
-      element: search.value,
-      bundlePath: pagefindBundlePath(),
-      showImages: false,
-      showSubResults: true,
-      autofocus: true,
-    })
-    initialized = true
-  }
-  catch {
-    loadFailed.value = true
-  }
-  finally {
-    isLoading.value = false
-  }
-}
-
-async function open() {
-  if (!dialog.value?.open)
-    dialog.value?.showModal()
-
-  document.body.classList.add('docs-search-open')
-  await loadSearch()
-}
-
-function close() {
-  dialog.value?.close()
-}
-
-function onSearchClick(event: MouseEvent) {
-  if (event.target instanceof Element && event.target.closest('a[href]'))
-    close()
-}
-
-function onClose() {
-  document.body.classList.remove('docs-search-open')
-  trigger.value?.focus()
-}
-
-function onKeydown(event: KeyboardEvent) {
-  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-    event.preventDefault()
-    dialog.value?.open ? close() : open()
-  }
-}
-
-onMounted(() => {
-  isApplePlatform.value = /Mac|iPhone|iPod|iPad/i.test(navigator.platform)
-  window.addEventListener('keydown', onKeydown)
-})
-
-onBeforeUnmount(() => {
-  document.body.classList.remove('docs-search-open')
-  window.removeEventListener('keydown', onKeydown)
-})
+if (!isDevelopment)
+  useHead({ script: [{ src: `${base}/search.js`, defer: true }] })
 </script>
 
 <template>
   <div class="docs-search">
     <button
-      ref="trigger"
       type="button"
       class="docs-search-trigger"
+      :disabled="isDevelopment"
+      :title="isDevelopment ? 'Search is unavailable during development. Build or preview the docs to search the generated index.' : undefined"
       aria-haspopup="dialog"
       aria-controls="docs-search-dialog"
       aria-keyshortcuts="Control+K Meta+K"
-      @click="open"
     >
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <circle cx="10.8" cy="10.8" r="6.3" fill="none" stroke="currentColor" stroke-width="1.8" />
         <path d="m16 16 4 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
       </svg>
       <span class="docs-search-label">Search docs</span>
-      <kbd aria-hidden="true">{{ isApplePlatform ? '⌘' : 'Ctrl' }} K</kbd>
+      <kbd aria-hidden="true">Ctrl K</kbd>
     </button>
 
     <dialog
+      v-if="!isDevelopment"
       id="docs-search-dialog"
-      ref="dialog"
       aria-labelledby="docs-search-title"
-      @click.self="close"
-      @close="onClose"
     >
       <div class="docs-search-panel">
         <header class="docs-search-header">
@@ -123,23 +40,18 @@ onBeforeUnmount(() => {
               Search docs
             </h2>
           </div>
-          <button type="button" class="docs-search-close" aria-label="Close search" @click="close">
-            <span aria-hidden="true">×</span>
+          <button type="button" class="docs-search-close" aria-label="Close search">
+            <span aria-hidden="true">&times;</span>
           </button>
         </header>
 
-        <p v-if="isDevelopment" class="docs-search-message" role="status">
-          Search is unavailable during development. Build or preview the docs to search the generated index.
+        <p class="docs-search-loading" role="status">
+          Loading search&hellip;
         </p>
-        <p v-else-if="loadFailed" class="docs-search-message" role="alert">
+        <p class="docs-search-message" role="alert">
           The search index could not be loaded. Please try again after rebuilding the docs.
         </p>
-        <div v-else class="docs-search-results" @click="onSearchClick">
-          <p v-if="isLoading" class="docs-search-loading" role="status">
-            Loading search…
-          </p>
-          <div ref="search" aria-label="Documentation search results" />
-        </div>
+        <div id="docs-search-results" class="docs-search-results" :data-bundle-path="`${base}/pagefind/`" />
       </div>
     </dialog>
   </div>
@@ -168,9 +80,13 @@ body.docs-search-open {
   white-space: nowrap;
 }
 
-.docs-search-trigger:hover {
+.docs-search-trigger:hover:not(:disabled) {
   background: var(--color-paper-2);
   color: var(--color-ink);
+}
+
+.docs-search-trigger:disabled {
+  opacity: 0.6;
 }
 
 .docs-search-trigger svg {
@@ -271,6 +187,17 @@ body.docs-search-open {
   margin: 0 0 var(--space-sm);
   color: var(--color-ink-2);
   font-size: var(--text-sm);
+}
+
+.docs-search-loading,
+.docs-search-message,
+dialog[data-state="error"] .docs-search-results {
+  display: none;
+}
+
+dialog[data-state="loading"] .docs-search-loading,
+dialog[data-state="error"] .docs-search-message {
+  display: block;
 }
 
 .docs-search-results {
