@@ -1,6 +1,7 @@
 import type { NodeOAuthClient, NodeSavedSessionStore, NodeSavedStateStore, OAuthClientMetadataInput, OAuthSession } from '@atproto/oauth-client-node'
 import type { ClientMetadataOptions } from './oauth/metadata.ts'
 import { clientMetadata as buildClientMetadata } from './oauth/metadata.ts'
+import { consentScope } from './oauth/scope.ts'
 
 export type { ClientMetadataOptions } from './oauth/metadata.ts'
 export { spacesSupported } from './supported.ts'
@@ -25,8 +26,8 @@ export interface OAuth {
   /** Serve at `metadataPath`. */
   readonly metadata: OAuthClientMetadataInput
   readonly client: NodeOAuthClient
-  /** URL to redirect the user to. */
-  authorize: (identifier: string, options?: { state?: string }) => Promise<URL>
+  /** URL to redirect the user to. `scopes` must be a subset of the client's. */
+  authorize: (identifier: string, options?: { state?: string, scopes?: readonly string[] }) => Promise<URL>
   /** The session works as `createAirspace({ session })`. */
   callback: (params: URLSearchParams) => Promise<{ session: OAuthSession, did: string, state: string | null }>
   restore: (did: string) => Promise<OAuthSession>
@@ -63,7 +64,10 @@ export async function createOAuth(options: OAuthOptions): Promise<OAuth> {
   return {
     metadata,
     client,
-    authorize: (identifier, opts) => client.authorize(identifier, { scope: metadata.scope, state: opts?.state }),
+    async authorize(identifier, opts) {
+      const scope = consentScope(options.scopes, opts?.scopes, metadata.scope)
+      return client.authorize(identifier, { scope, state: opts?.state })
+    },
     async callback(params) {
       const { session, state } = await client.callback(params)
       return { session, did: session.did, state }

@@ -23,6 +23,20 @@ Then wire up three things:
 
 File scopes match the types your blob fields accept, so a model that only accepts `image/*` asks for `blob:image/*`, not `blob:*/*`.
 
+## asking for part of the scopes
+
+`authorize` takes a subset of the client's scopes, so login can ask for the collections and a space can be granted in a later consent. A stock PDS rejects `space:` scopes it does not know, which would otherwise break login:
+
+```ts
+const url = await oauth.authorize(handle, {
+  scopes: ['atproto', 'repo:dev.example.project'],
+})
+```
+
+Every consent includes `atproto`, and a scope the client did not declare throws before the request leaves your app. `signIn` in the browser takes the same `scopes`.
+
+## managing your own spaces
+
 A space of your own is asked for with `manage=create`, which is enough to create it and write into it. Each operation is granted on its own, so ask for `update` to call `manage.update()` (or `manage.ensure()` on a space that already exists) and `delete` to call `manage.delete()`:
 
 ```ts

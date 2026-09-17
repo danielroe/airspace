@@ -121,6 +121,25 @@ describe('createOAuth', () => {
     await expect(oauth.restore('did:plc:nobody')).rejects.toThrow()
   })
 
+  it('narrows a consent to a subset of the declared scopes, never beyond', async () => {
+    const all = scopesFor({ collections: [projects], spaces: [workspace] })
+    const oauth = await createOAuth({
+      baseUrl: 'https://roe.dev',
+      redirectPath: '/cb',
+      name: 'test',
+      scopes: all,
+      stores: { session: { get: async () => undefined, set: async () => {}, del: async () => {} } },
+    })
+    const spy = vi.spyOn(oauth.client, 'authorize').mockResolvedValue(new URL('https://pds.example/authorize'))
+    await oauth.authorize('alice.test', { scopes: ['atproto', 'repo:dev.example.project'] })
+    expect(spy).toHaveBeenCalledWith('alice.test', { scope: 'atproto repo:dev.example.project', state: undefined })
+    await oauth.authorize('alice.test')
+    expect(spy).toHaveBeenLastCalledWith('alice.test', { scope: all.join(' '), state: undefined })
+    await expect(oauth.authorize('alice.test', { scopes: ['atproto', 'repo:dev.example.other'] })).rejects.toThrow(`"repo:dev.example.other" is not among the client's scopes`)
+    await expect(oauth.authorize('alice.test', { scopes: [''] })).rejects.toThrow('"" is not among the client\'s scopes')
+    await expect(oauth.authorize('alice.test', { scopes: [] })).rejects.toThrow('every consent must include the "atproto" scope')
+  })
+
   it('resolves identities where it is told to, so a local PDS works', async () => {
     const oauth = await createOAuth({
       baseUrl: 'http://127.0.0.1:3000',
@@ -155,5 +174,21 @@ describe('createBrowserOAuth', () => {
     })
     expect(oauth.client.clientMetadata.client_id).toBe('https://unifont.dev/oauth-client-metadata.json')
     expect(oauth.client.clientMetadata.scope).toBe('atproto repo:dev.example.project')
+  })
+
+  it('narrows a sign-in to a subset of the declared scopes, never beyond', async () => {
+    const all = scopesFor({ collections: [projects], spaces: [workspace] })
+    const oauth = await createBrowserOAuth({
+      baseUrl: 'https://unifont.dev',
+      redirectPath: '/stack',
+      name: 'unifont.dev',
+      scopes: all,
+    })
+    const spy = vi.spyOn(oauth.client, 'signInRedirect').mockResolvedValue(undefined as never)
+    await oauth.signIn('alice.test', { scopes: ['atproto', 'repo:dev.example.project'] })
+    expect(spy).toHaveBeenCalledWith('alice.test', { scope: 'atproto repo:dev.example.project', state: undefined, signal: undefined })
+    await oauth.signIn('alice.test')
+    expect(spy).toHaveBeenLastCalledWith('alice.test', { scope: all.join(' '), state: undefined, signal: undefined })
+    await expect(oauth.signIn('alice.test', { scopes: ['repo:dev.example.project'] })).rejects.toThrow('every consent must include the "atproto" scope')
   })
 })
