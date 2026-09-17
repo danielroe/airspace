@@ -6,17 +6,19 @@ import { build } from 'esbuild'
  * it: code-split, so lazily imported chunks (spaces, image-meta) are reported
  * separately from what loads eagerly. "airspace only" keeps every dependency
  * external; "with deps" bundles the runtime dependencies too. Optional peers
- * (comark, @atproto/oauth-client-node) stay external in both.
+ * (comark, the atproto OAuth clients) stay external in both.
  */
 const ENTRIES: Record<string, string> = {
   'airspace': 'src/index.ts',
   'airspace/lexicon': 'src/lexicon.ts',
   'airspace/live': 'src/live.ts',
   'airspace/oauth': 'src/oauth.ts',
+  'airspace/oauth/browser': 'src/oauth/browser.ts',
+  'airspace/oauth/metadata': 'src/oauth/metadata.ts',
   'airspace/plugins/markdown': 'src/plugins/markdown.ts',
   'airspace/plugins/timestamps': 'src/plugins/timestamps.ts',
 }
-const PEERS = ['comark', '@atproto/oauth-client-node']
+const PEERS = ['comark', '@atproto/oauth-client-node', '@atproto/oauth-client-browser']
 
 interface Size { eager: number, lazy: number }
 
