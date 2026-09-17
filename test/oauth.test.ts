@@ -12,6 +12,8 @@ const current = defineCollection(location)
 const workspace = defineSpace({ nsid: 'dev.example.workspace', key: 'literal:self', collections: ['dev.example.project'] }, {
   collections: { projects, current },
 })
+const spaceScope = (scopes: string[]): string => scopes.find(s => s.startsWith('space:'))!
+
 describe('scopesFor', () => {
   it('covers collections and spaces beyond their declaration', () => {
     expect(scopesFor({ collections: { projects, categories }, spaces: { workspace } })).toEqual([
@@ -21,6 +23,26 @@ describe('scopesFor', () => {
       'space:dev.example.workspace?skey=self&collection=dev.example.location&manage=create',
     ])
     expect(scopesFor({ collections: [projects] })).toEqual(['atproto', 'repo:dev.example.project'])
+  })
+
+  it('asks for the manage operations the app needs on its own spaces', () => {
+    expect(scopesFor({ spaces: { workspace }, manage: ['create', 'delete'] })).toEqual([
+      'atproto',
+      'space:dev.example.workspace?skey=self&collection=dev.example.location&manage=create&manage=delete',
+    ])
+    expect(spaceScope(scopesFor({ spaces: { workspace }, manage: [] }))).not.toContain('manage=')
+    const foreign = defineSpace({ nsid: 'dev.example.workspace', key: 'literal:self' }, { authority: 'did:plc:someoneelse', collections: { projects } })
+    expect(spaceScope(scopesFor({ spaces: { foreign }, manage: ['delete'] }))).not.toContain('manage=')
+  })
+
+  it('takes manage operations per space, keyed as the spaces are', () => {
+    const archive = defineSpace({ nsid: 'dev.example.archive', key: 'literal:self', collections: ['dev.example.project'] }, { collections: { projects } })
+    expect(scopesFor({ spaces: { workspace, archive }, manage: { archive: ['create', 'delete'] } })).toEqual([
+      'atproto',
+      'space:dev.example.workspace?skey=self&collection=dev.example.location&manage=create',
+      'space:dev.example.archive?skey=self&manage=create&manage=delete',
+    ])
+    expect(scopesFor({ spaces: [archive], manage: { 'dev.example.archive': ['update'] } })).toContain('space:dev.example.archive?skey=self&manage=update')
   })
 
   it('narrows blob scope to the accepted MIME patterns, behind a ref thunk', () => {

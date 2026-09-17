@@ -15,7 +15,7 @@ export { belongsTo, defineCollection, defineCollections, defineSpace, hasMany } 
 export type { LexiconPermission, PermissionSetDeclaration } from './permissions.ts'
 export type { MergeMeta, NoMeta, Plugin, PluginContext } from './plugin.ts'
 export { definePlugin } from './plugin.ts'
-export type { ScopesInput } from './scopes.ts'
+export type { ScopesInput, SpaceManageOp } from './scopes.ts'
 export { scopesFor } from './scopes.ts'
 export type { PasswordSessionOptions } from './session.ts'
 export { passwordSession } from './session.ts'

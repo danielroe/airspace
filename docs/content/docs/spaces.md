@@ -40,5 +40,7 @@ await airspace.workspace.manage.info() // how is it configured? `null` until `en
 
 You only need `ensure()` for a shared space. Writing to your own space creates it but leaves it unconfigured.
 
+Over OAuth each operation is a separate grant, asked for with `manage` in [`scopesFor`](/docs/oauth): `update()` and a second `ensure()` need `update`, and `delete()` needs `delete`.
+
 > [!WARNING]
 > Blobs uploaded into a space are currently readable through the public `sync.getBlob` endpoint ([atproto#5435](https://github.com/bluesky-social/atproto/issues/5435)). Don't put images in a space that you'd mind being seen.
