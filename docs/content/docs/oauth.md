@@ -33,7 +33,8 @@ const url = await oauth.authorize(handle, {
 })
 ```
 
-Every consent includes `atproto`, and a scope the client did not declare throws before the request leaves your app.
+Every consent includes `atproto`, and a scope the client did not declare throws before the request leaves your app. `signIn` in the browser takes the same `scopes`.
+
 ## in the browser
 
 `airspace/oauth/browser` runs the same handshake in the page, so your server never sees a token. Storage is handled by `@atproto/oauth-client-browser`, in IndexedDB, so there are no stores to provide.

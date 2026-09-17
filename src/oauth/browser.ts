@@ -1,6 +1,7 @@
 import type { BrowserOAuthClient, OAuthClientMetadataInput, OAuthSession } from '@atproto/oauth-client-browser'
 import type { ClientMetadataOptions } from './metadata.ts'
 import { clientMetadata as buildClientMetadata } from './metadata.ts'
+import { consentScope } from './scope.ts'
 
 export { spacesSupported } from '../supported.ts'
 export type { ClientMetadataOptions } from './metadata.ts'
@@ -30,8 +31,8 @@ export interface BrowserOAuth {
   readonly client: BrowserOAuthClient
   /** Handle a redirect back from the PDS, restore a stored session, or `null` when neither applies. `state` is only set for a redirect. */
   init: (options?: { refresh?: boolean }) => Promise<BrowserOAuthResult | null>
-  /** Navigates away; the promise never resolves. */
-  signIn: (identifier: string, options?: { state?: string, signal?: AbortSignal }) => Promise<never>
+  /** Navigates away; the promise never resolves. `scopes` must be a subset of the client's. */
+  signIn: (identifier: string, options?: { state?: string, scopes?: readonly string[], signal?: AbortSignal }) => Promise<never>
   restore: (did: string) => Promise<OAuthSession>
   /** Revokes at the authorization server as well as dropping the stored session. */
   revoke: (did: string) => Promise<void>
@@ -57,7 +58,10 @@ export async function createBrowserOAuth(options: BrowserOAuthOptions): Promise<
         return null
       return { session: result.session, did: result.session.did, state: result.state ?? null }
     },
-    signIn: (identifier, opts) => client.signInRedirect(identifier, { scope: metadata.scope, state: opts?.state, signal: opts?.signal }),
+    async signIn(identifier, opts) {
+      const scope = consentScope(options.scopes, opts?.scopes, metadata.scope)
+      return client.signInRedirect(identifier, { scope, state: opts?.state, signal: opts?.signal })
+    },
     restore: did => client.restore(did),
     revoke: did => client.revoke(did),
   }

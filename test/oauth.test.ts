@@ -153,4 +153,20 @@ describe('createBrowserOAuth', () => {
     expect(oauth.client.clientMetadata.client_id).toBe('https://unifont.dev/oauth-client-metadata.json')
     expect(oauth.client.clientMetadata.scope).toBe('atproto repo:dev.example.project')
   })
+
+  it('narrows a sign-in to a subset of the declared scopes, never beyond', async () => {
+    const all = scopesFor({ collections: [projects], spaces: [workspace] })
+    const oauth = await createBrowserOAuth({
+      baseUrl: 'https://unifont.dev',
+      redirectPath: '/stack',
+      name: 'unifont.dev',
+      scopes: all,
+    })
+    const spy = vi.spyOn(oauth.client, 'signInRedirect').mockResolvedValue(undefined as never)
+    await oauth.signIn('alice.test', { scopes: ['atproto', 'repo:dev.example.project'] })
+    expect(spy).toHaveBeenCalledWith('alice.test', { scope: 'atproto repo:dev.example.project', state: undefined, signal: undefined })
+    await oauth.signIn('alice.test')
+    expect(spy).toHaveBeenLastCalledWith('alice.test', { scope: all.join(' '), state: undefined, signal: undefined })
+    await expect(oauth.signIn('alice.test', { scopes: ['repo:dev.example.project'] })).rejects.toThrow('every consent must include the "atproto" scope')
+  })
 })

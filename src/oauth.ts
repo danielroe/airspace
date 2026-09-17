@@ -1,7 +1,7 @@
 import type { NodeOAuthClient, NodeSavedSessionStore, NodeSavedStateStore, OAuthClientMetadataInput, OAuthSession } from '@atproto/oauth-client-node'
 import type { ClientMetadataOptions } from './oauth/metadata.ts'
-import { AirspaceError } from './errors.ts'
 import { clientMetadata as buildClientMetadata } from './oauth/metadata.ts'
+import { consentScope } from './oauth/scope.ts'
 
 export type { ClientMetadataOptions } from './oauth/metadata.ts'
 export { spacesSupported } from './supported.ts'
@@ -65,15 +65,7 @@ export async function createOAuth(options: OAuthOptions): Promise<OAuth> {
     metadata,
     client,
     async authorize(identifier, opts) {
-      let scope = metadata.scope
-      if (opts?.scopes) {
-        const unknown = opts.scopes.find(scope => !options.scopes.includes(scope))
-        if (unknown !== undefined)
-          throw new AirspaceError(`"${unknown}" is not among the client's scopes`)
-        if (!opts.scopes.includes('atproto'))
-          throw new AirspaceError('every consent must include the "atproto" scope')
-        scope = opts.scopes.join(' ')
-      }
+      const scope = consentScope(options.scopes, opts?.scopes, metadata.scope)
       return client.authorize(identifier, { scope, state: opts?.state })
     },
     async callback(params) {
