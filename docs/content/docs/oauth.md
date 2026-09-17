@@ -23,12 +23,20 @@ Then wire up three things:
 
 File scopes match the types your blob fields accept, so a model that only accepts `image/*` asks for `blob:image/*`, not `blob:*/*`.
 
-A space of your own is asked for with `manage=create`, enough to write into it before it exists. Pass `manage` to ask for more, such as letting `manage.delete()` tear it down:
+A space of your own is asked for with `manage=create`, which is enough to create it and write into it. Each operation is granted on its own, so ask for `update` to call `manage.update()` (or `manage.ensure()` on a space that already exists) and `delete` to call `manage.delete()`:
 
 ```ts
-scopesFor({ spaces: { workspace }, manage: ['create', 'delete'] })
-// ['atproto', 'space:dev.roe.workspace?skey=self&manage=create&manage=delete']
+scopesFor({ spaces: { workspace }, manage: ['create', 'update'] })
+// ... 'space:dev.roe.workspace?skey=self&manage=create&manage=update'
 ```
+
+With more than one space of your own, key `manage` by the same names you passed to `spaces`:
+
+```ts
+scopesFor({ spaces: { workspace, archive }, manage: { archive: ['create', 'delete'] } })
+```
+
+Spaces you leave out keep the `['create']` default; pass `[]` to ask for nothing.
 
 ## against a local PDS
 
