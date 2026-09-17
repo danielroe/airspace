@@ -1,9 +1,17 @@
 import type { AnyCollection, AnySpace } from './model.ts'
 import type { PermissionSetDeclaration } from './permissions.ts'
 
+export type SpaceManageOp = 'create' | 'update' | 'delete'
+
 export interface ScopesInput {
   collections?: Record<string, AnyCollection> | readonly AnyCollection[]
   spaces?: Record<string, AnySpace> | readonly AnySpace[]
+  /**
+   * Management operations on own-authority spaces, for every space or keyed as
+   * `spaces` is (by type, if an array). Each is granted on its own; defaults to
+   * `['create']`, and `[]` requests none.
+   */
+  manage?: readonly SpaceManageOp[] | Record<string, readonly SpaceManageOp[]>
   /**
    * Permission sets to request as `include:<nsid>`: a `permissions()` def from
    * your own model, or the NSID of someone else's.
@@ -13,10 +21,23 @@ export interface ScopesInput {
 
 const values = <T>(input: Record<string, T> | readonly T[] | undefined): T[] => Array.isArray(input) ? [...input] : Object.values(input ?? {})
 
+const DEFAULT_MANAGE: readonly SpaceManageOp[] = ['create']
+
+function manageOps(manage: ScopesInput['manage'], key: string, type: string): readonly SpaceManageOp[] {
+  if (!manage)
+    return DEFAULT_MANAGE
+  if (Array.isArray(manage))
+    return manage as readonly SpaceManageOp[]
+  const byKey = manage as Record<string, readonly SpaceManageOp[]>
+  return byKey[key] ?? byKey[type] ?? DEFAULT_MANAGE
+}
+
 /** OAuth scopes for a model. Usable before a session exists. */
 export function scopesFor(input: ScopesInput): string[] {
   const collections = values(input.collections)
-  const spaces = values(input.spaces)
+  const spaces: [string, AnySpace][] = Array.isArray(input.spaces)
+    ? input.spaces.map(s => [s.type, s])
+    : Object.entries(input.spaces ?? {})
   const includes = input.include ?? []
   const covered = coverage(includes)
   const scopes = [
@@ -24,7 +45,7 @@ export function scopesFor(input: ScopesInput): string[] {
     ...includes.map(set => `include:${typeof set === 'string' ? set : set.nsid}`),
     ...collections.filter(c => !covered(c.nsid)).map(c => `repo:${c.nsid}`),
   ]
-  for (const s of spaces) {
+  for (const [key, s] of spaces) {
     const params = new URLSearchParams()
     if (s.authority !== 'self')
       params.set('authority', s.authority)
@@ -34,12 +55,14 @@ export function scopesFor(input: ScopesInput): string[] {
       if (!declared.has(c.nsid))
         params.append('collection', c.nsid)
     }
-    if (s.authority === 'self')
-      params.append('manage', 'create')
+    if (s.authority === 'self') {
+      for (const op of new Set(manageOps(input.manage, key, s.type)))
+        params.append('manage', op)
+    }
     const query = params.toString()
     scopes.push(`space:${s.type}${query ? `?${query}` : ''}`)
   }
-  const all = [...collections, ...spaces.flatMap(s => Object.values(s.collections) as AnyCollection[])]
+  const all = [...collections, ...spaces.flatMap(([, s]) => Object.values(s.collections) as AnyCollection[])]
   scopes.push(...blobScopes(all))
   return scopes
 }
