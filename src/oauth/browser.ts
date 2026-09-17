@@ -7,7 +7,7 @@ export type { ClientMetadataOptions } from './metadata.ts'
 export type { OAuthSession } from '@atproto/oauth-client-browser'
 
 export interface BrowserOAuthOptions extends ClientMetadataOptions {
-  /** Where the PDS returns the user. Defaults to `query`. */
+  /** Where the PDS returns the user. Defaults to `fragment`, which keeps the authorization code out of the request your server sees. */
   responseMode?: 'query' | 'fragment'
   /** Allow `http:` authorization servers, for a local PDS. */
   allowHttp?: boolean
