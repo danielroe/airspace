@@ -17,7 +17,7 @@ await airspace.workspace.projects.publish(draft.rkey, { transform: value => ({ .
 await airspace.workspace.projects.publish(draft.rkey, { ifMatch: draft.cid })
 
 const live = await airspace.workspace.projects.published() // keys that exist in both
-await airspace.workspace.supported() // false on most PDSes today
+await airspace.workspace.supported() // false on most PDSes today, needs no session
 ```
 
 A published copy is identical to its draft, down to the content hash, so `ifMatch: draft.cid` means "only if nobody has edited the public record since". Pointers between drafts are stored as plain AT URIs, so a published copy keeps them.

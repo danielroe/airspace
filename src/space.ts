@@ -9,22 +9,6 @@ import { cidFromBlob } from './blob.ts'
 import { SpacesUnsupportedError, ValidationError } from './errors.ts'
 import { com } from './lex/index.ts'
 
-// Either error means the method exists; a PDS without spaces proxies the unknown method and answers `UpstreamFailure`.
-const SPACE_ANSWERS: ReadonlySet<string> = new Set(['SpaceNotFound', 'InvalidRequest'])
-
-/** Does this PDS serve permissioned spaces? One `getSpace` call, which needs a session. */
-export async function probeSpaces(client: Client, space: SpaceUri): Promise<boolean> {
-  try {
-    await client.call(com.atproto.simplespace.getSpace, { space })
-    return true
-  }
-  catch (err) {
-    if (err instanceof XrpcResponseError)
-      return SPACE_ANSWERS.has(err.error)
-    throw err
-  }
-}
-
 /** A client that reports a failing space call as `SpacesUnsupportedError` when the PDS has no spaces. */
 export function guardSpaces(client: Client, service: string, supported: () => Promise<boolean>): Client {
   return new Proxy(client, {
@@ -37,8 +21,8 @@ export function guardSpaces(client: Client, service: string, supported: () => Pr
           return await (value as Client['call']).apply(target, args)
         }
         catch (err) {
-          // A refused credential says nothing about space support, and the probe would be refused too.
-          const auth = err instanceof XrpcResponseError && (err.status === 401 || err.status === 403)
+          // A refused credential says nothing about space support; `AuthMissing` on an authenticated call means no route.
+          const auth = err instanceof XrpcResponseError && (err.status === 403 || (err.status === 401 && err.error !== 'AuthMissing'))
           if (err instanceof XrpcResponseError && !auth && !await supported())
             throw new SpacesUnsupportedError(service, { cause: err })
           throw err

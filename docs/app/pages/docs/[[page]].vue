@@ -101,7 +101,7 @@ useHead({
       </ul>
     </nav>
 
-    <article class="prose" :class="{ glossary: slug === 'concepts' }">
+    <article class="prose" :class="{ glossary: slug === 'concepts' }" data-pagefind-body>
       <MarkdownDocument v-if="content" :value="content.document" />
 
       <nav class="pager" aria-label="Pagination">
@@ -118,6 +118,8 @@ useHead({
 
 <style scoped>
 .docs {
+  --toc-offset: var(--space-lg);
+
   display: grid;
   gap: var(--space-lg);
   align-items: start;
@@ -195,14 +197,14 @@ useHead({
   margin: var(--space-xl) 0 var(--space-sm);
   padding-top: var(--space-md);
   border-top: var(--rule);
-  scroll-margin-top: 2rem;
+  scroll-margin-top: var(--toc-offset);
 }
 
 .prose :deep(h3) {
   font-size: var(--text-lg);
   font-weight: 500;
   margin: var(--space-lg) 0 var(--space-xs);
-  scroll-margin-top: 2rem;
+  scroll-margin-top: var(--toc-offset);
 }
 
 .prose.glossary {
@@ -340,8 +342,8 @@ useHead({
 
   .pages {
     position: sticky;
-    top: 2rem;
-    max-height: calc(100dvh - 4rem);
+    top: var(--toc-offset);
+    max-height: calc(100dvh - var(--toc-offset) * 2);
     overflow-y: auto;
   }
 }
