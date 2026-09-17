@@ -1,0 +1,42 @@
+app = 'airspace-demo-pds'
+primary_region = 'lhr'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[env]
+  LOG_ENABLED = '1'
+  LOG_LEVEL = 'info'
+  PDS_ACCEPTING_REPO_IMPORTS = '0'
+  PDS_BLOBSTORE_DISK_LOCATION = '/data/blobs'
+  PDS_BLOB_UPLOAD_LIMIT = '1000000'
+  PDS_DATA_DIRECTORY = '/data'
+  PDS_DID_PLC_URL = 'https://plc.directory'
+  PDS_HOME_URL = 'https://getair.space'
+  PDS_HOSTNAME = 'pds.demo.getair.space'
+  PDS_INVITE_REQUIRED = '1'
+  PDS_PORT = '3000'
+  PDS_SERVICE_HANDLE_DOMAINS = '.demo.getair.space'
+  PDS_SERVICE_NAME = 'airspace demo'
+
+[[mounts]]
+  source = 'pds_data'
+  destination = '/data'
+  initial_size = '1gb'
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = 'off'
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '20s'
+    path = '/xrpc/_health'
+
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = '1gb'

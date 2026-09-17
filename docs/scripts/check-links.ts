@@ -49,7 +49,7 @@ function expectFile(path: string, contains?: string) {
   }
 }
 
-for (const file of ['/robots.txt', '/sitemap.xml', '/llms.txt', '/llms-full.txt', '/index.md'])
+for (const file of ['/robots.txt', '/sitemap.xml', '/llms.txt', '/llms-full.txt', '/index.md', '/search.js', '/pagefind/pagefind-ui.js'])
   expectFile(file)
 
 for (const page of docsPages) {
@@ -65,5 +65,17 @@ for (const page of docsPages) {
 }
 
 console.log(`${missing} missing machine-readable entries`)
-if (broken || missing)
+
+let scripted = 0
+for (const page of pages) {
+  const html = readFileSync(page, 'utf8')
+  const path = page.slice(root.length)
+  if ((path === '/index.html' || path.startsWith('/docs')) && /<script[^>]+src="\/_nuxt\//.test(html)) {
+    scripted++
+    console.error(`${path} loads the client bundle, but is served without scripts`)
+  }
+}
+
+console.log(`${scripted} pages unexpectedly loading the client bundle`)
+if (broken || missing || scripted)
   process.exitCode = 1

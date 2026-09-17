@@ -1,13 +1,12 @@
 import type { AirspaceRecord, Infer, Plain } from '../src/index.ts'
 import type { TestPds } from './pds.ts'
-import { XrpcResponseError } from '@atproto/lex-client'
 import { l as lex } from '@atproto/lex-schema'
 import { afterAll, afterEach, beforeAll, describe, expect, expectTypeOf, it, vi } from 'vitest'
 import { belongsTo, ConflictError, createAirspace, defineCollection, defineSpace, parseAtUri, ScopeError, SpacesUnsupportedError, ValidationError } from '../src/index.ts'
 import { com } from '../src/lex/index.ts'
-import { probeSpaces } from '../src/space.ts'
+import { spacesSupported } from '../src/supported.ts'
 import { workspace as declaration, location, project, projectCategory, projectCategoryV2 } from './fixtures/lex.ts'
-import { countCalls, hideSpaces, startTestPds } from './pds.ts'
+import { countCalls, hideSpaces, startTestPds, stubXrpcError } from './pds.ts'
 
 type Project = Plain<Infer<typeof project>>
 
@@ -394,10 +393,24 @@ describe('space support', () => {
     expect(calls.filter(call => call === 'com.atproto.simplespace.getSpace')).toHaveLength(1)
   })
 
-  it.each(['MethodNotImplemented', 'AuthMissing', 'UpstreamFailure'])('does not read %s as an answer from the space domain', async (error) => {
-    const status = error === 'AuthMissing' ? 401 : 501
-    const client = { call: () => Promise.reject(new XrpcResponseError(com.atproto.simplespace.getSpace as never, new Response(null, { status }), { encoding: 'application/json', body: { error, message: error } })) }
-    await expect(probeSpaces(client as never, 'at://did:plc:a/space/dev.example.workspace/self')).resolves.toBe(false)
+  it.each([
+    ['a credential refusal', 401, { error: 'AuthMissing', message: 'Authentication Required' }],
+    ['an unimplemented method', 501, { error: 'MethodNotImplemented', message: 'Method Not Implemented' }],
+    ['a failed proxy', 502, { error: 'UpstreamFailure', message: 'Upstream service unreachable' }],
+    ['an unroutable method', 400, { error: 'InvalidRequest', message: 'No service configured for com.atproto.simplespace.getSpace' }],
+    ['a bodiless refusal', 400, null],
+  ])('does not read %s as an answer from the space domain', async (_label, status, body) => {
+    vi.stubGlobal('fetch', () => Promise.resolve(new Response(body && JSON.stringify(body), { status })))
+    await expect(spacesSupported(pds.service)).resolves.toBe(false)
+  })
+
+  it('answers without a session', async () => {
+    const account = await pds.account()
+    const readOnly = createAirspace({ identity: { did: account.did, service: pds.service }, spaces: { workspace } })
+    expect(await readOnly.workspace.supported()).toBe(true)
+    hideSpaces()
+    const hidden = createAirspace({ identity: { did: account.did, service: pds.service }, spaces: { workspace } })
+    expect(await hidden.workspace.supported()).toBe(false)
   })
 
   it('reports a PDS without spaces rather than passing on its XRPC error', async () => {
@@ -406,6 +419,12 @@ describe('space support', () => {
     expect(await airspace.workspace.supported()).toBe(false)
     await expect(airspace.workspace.manage.ensure()).rejects.toThrow(SpacesUnsupportedError)
     await expect(airspace.workspace.projects.create({ name: 'Draft', category: { uri: 'at://did:plc:a/dev.example.projectCategory/x', cid: 'bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku' }, createdAt: now() })).rejects.toThrow(/does not serve permissioned spaces/)
+  })
+
+  it('reports a PDS that refuses the method as missing auth rather than passing on the refusal', async () => {
+    const { airspace } = await setup()
+    stubXrpcError('com.atproto.simplespace.getSpace', 401, { error: 'AuthMissing', message: 'Authentication Required' })
+    await expect(airspace.workspace.manage.info()).rejects.toThrow(SpacesUnsupportedError)
   })
 
   it('names the missing scope rather than blaming the PDS when the grant is too narrow', async () => {

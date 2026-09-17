@@ -410,6 +410,28 @@ button:disabled {
   font-size: var(--text-xs);
 }
 
+.credentials-hint {
+  margin: 0;
+  color: var(--color-ink-2);
+  font-size: var(--text-xs);
+  text-wrap: pretty;
+}
+
+.credentials-snippet {
+  margin: 0;
+  padding: var(--space-xs);
+  overflow-x: auto;
+  border: var(--rule);
+  border-radius: var(--radius-sm);
+  background: var(--color-paper);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.demo-form .demo-props code {
+  overflow-wrap: anywhere;
+}
+
 .tag {
   display: inline-block;
   padding: 0.05rem 0.5rem;
