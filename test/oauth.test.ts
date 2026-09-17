@@ -107,6 +107,8 @@ describe('createOAuth', () => {
     await oauth.authorize('alice.test')
     expect(spy).toHaveBeenLastCalledWith('alice.test', { scope: all.join(' '), state: undefined })
     await expect(oauth.authorize('alice.test', { scopes: ['atproto', 'repo:dev.example.other'] })).rejects.toThrow(`"repo:dev.example.other" is not among the client's scopes`)
+    await expect(oauth.authorize('alice.test', { scopes: [''] })).rejects.toThrow('"" is not among the client\'s scopes')
+    await expect(oauth.authorize('alice.test', { scopes: [] })).rejects.toThrow('every consent must include the "atproto" scope')
   })
 
   it('resolves identities where it is told to, so a local PDS works', async () => {

@@ -97,11 +97,16 @@ export async function createOAuth(options: OAuthOptions): Promise<OAuth> {
     metadata,
     client,
     async authorize(identifier, opts) {
-      const scopes = opts?.scopes ?? options.scopes
-      const unknown = scopes.find(scope => !options.scopes.includes(scope))
-      if (unknown)
-        throw new AirspaceError(`"${unknown}" is not among the client's scopes`)
-      return client.authorize(identifier, { scope: scopes.join(' '), state: opts?.state })
+      let scope = metadata.scope
+      if (opts?.scopes) {
+        const unknown = opts.scopes.find(scope => !options.scopes.includes(scope))
+        if (unknown !== undefined)
+          throw new AirspaceError(`"${unknown}" is not among the client's scopes`)
+        if (!opts.scopes.includes('atproto'))
+          throw new AirspaceError('every consent must include the "atproto" scope')
+        scope = opts.scopes.join(' ')
+      }
+      return client.authorize(identifier, { scope, state: opts?.state })
     },
     async callback(params) {
       const { session, state } = await client.callback(params)
