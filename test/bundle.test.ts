@@ -75,6 +75,28 @@ describe('bundle boundaries', () => {
     expect(typeOnly.eager).not.toContain('com.atproto.repo.strongRef')
   })
 
+  it('keeps each OAuth entry free of the other environment\'s client', async () => {
+    const node = await chunks(`export { createOAuth } from './src/oauth.ts'`)
+    expect(node.eager + node.lazy).not.toContain('@atproto/oauth-client-browser')
+    const browser = await chunks(`export { createBrowserOAuth } from './src/oauth/browser.ts'`)
+    expect(browser.eager + browser.lazy).not.toContain('@atproto/oauth-client-node')
+    expect(browser.eager).not.toMatch(/from\s*["']@atproto\/oauth-client-browser["']/)
+    expect(browser.eager).toMatch(/import\("@atproto\/oauth-client-browser"\)/)
+  })
+
+  it('builds the metadata document with no OAuth client in the graph', async () => {
+    const result = await build({
+      stdin: { contents: `export { clientMetadata } from './src/oauth/metadata.ts'`, resolveDir: ROOT, loader: 'ts' },
+      bundle: true,
+      format: 'esm',
+      platform: 'browser',
+      write: false,
+      outdir: 'out',
+      metafile: true,
+    })
+    expect(Object.keys(result.metafile.inputs).sort()).toEqual(['<stdin>', 'src/oauth/metadata.ts'])
+  })
+
   it('bundles for a worker with no Node built-in it cannot do without', async () => {
     const result = await build({
       stdin: {

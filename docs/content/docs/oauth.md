@@ -23,6 +23,59 @@ Then wire up three things:
 
 File scopes match the types your blob fields accept, so a model that only accepts `image/*` asks for `blob:image/*`, not `blob:*/*`.
 
+## in the browser
+
+`airspace/oauth/browser` runs the same handshake in the page, so your server never sees a token. Storage is handled by `@atproto/oauth-client-browser`, in IndexedDB, so there are no stores to provide.
+
+```ts
+import { scopesFor } from 'airspace'
+import { createBrowserOAuth } from 'airspace/oauth/browser' // optional peer: @atproto/oauth-client-browser
+
+const oauth = await createBrowserOAuth({
+  baseUrl: 'https://unifont.dev',
+  redirectPath: '/stack',
+  name: 'unifont.dev',
+  scopes: scopesFor({ collections: { stacks } }),
+})
+
+const result = await oauth.init()
+if (result) {
+  const airspace = createAirspace({ identity: { did: result.did }, collections: { stacks }, session: result.session })
+}
+else {
+  await oauth.signIn('danielroe.dev') // navigates to the user's PDS
+}
+```
+
+`init()` handles a redirect back from the PDS, restores a stored session on a later page load, or returns `null` when there is neither. `redirectPath` is a page in your app rather than an API route. `revoke(did)` signs the user out: it revokes the tokens at their authorization server as well as dropping the stored session, the same as on the server.
+
+### handle resolution
+
+A browser cannot query DNS, so a handle such as `danielroe.dev` is resolved by asking a service over HTTP. That service sees every handle your users type, and by default it is `https://bsky.social`, which is a third party. Point it somewhere you trust:
+
+```ts
+handleResolver: 'https://your-pds.example.com' // any PDS resolves handles
+```
+
+DIDs are resolved directly and never go through it.
+
+### serving the metadata document
+
+A browser app still has to serve `/oauth-client-metadata.json`. `airspace/oauth/metadata` builds that document with no OAuth client behind it, so a server route can use it without either atproto client installed:
+
+```ts
+import { clientMetadata } from 'airspace/oauth/metadata'
+
+export default defineEventHandler(() => clientMetadata({
+  baseUrl: 'https://unifont.dev',
+  redirectPath: '/stack',
+  name: 'unifont.dev',
+  scopes: scopesFor({ collections: { stacks } }),
+}))
+```
+
+Both entry points produce the same document, so `clientMetadata` from `airspace/oauth` works too if the server already depends on `@atproto/oauth-client-node`.
+
 ## against a local PDS
 
 Handle and account lookups go to DNS and `plc.directory`, neither of which knows about a local account such as `alice.test`. Point both at your development network:

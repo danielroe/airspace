@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { defineCollection, defineSpace, scopesFor } from '../src/index.ts'
 import { clientMetadata, createOAuth } from '../src/oauth.ts'
+import { createBrowserOAuth } from '../src/oauth/browser.ts'
+import { clientMetadata as bareClientMetadata } from '../src/oauth/metadata.ts'
 import { authFull, gallery, location, project, projectCategory } from './fixtures/lex.ts'
 
 const categories = defineCollection(projectCategory)
@@ -66,6 +68,11 @@ describe('clientMetadata', () => {
       dpop_bound_access_tokens: true,
     })
   })
+
+  it('serves one document, whichever entry point builds it', () => {
+    const options = { baseUrl: 'https://unifont.dev', redirectPath: '/stack', name: 'unifont.dev', scopes } as const
+    expect(bareClientMetadata(options)).toEqual(clientMetadata(options))
+  })
 })
 
 describe('createOAuth', () => {
@@ -106,5 +113,25 @@ describe('createOAuth', () => {
     await oauth.client.identityResolver.resolve('alice.test').catch(() => {})
     await oauth.client.identityResolver.resolve('did:plc:o7sgbrqrvs3sjizryttaqml4').catch(() => {})
     expect(fetchedHosts).toEqual(['localhost:2583', 'localhost:2582'])
+  })
+})
+
+describe('createBrowserOAuth', () => {
+  const scopes = scopesFor({ collections: [projects] })
+
+  beforeEach(() => {
+    vi.stubGlobal('indexedDB', { open: () => ({ addEventListener() {}, removeEventListener() {} }) })
+  })
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('builds a BrowserOAuthClient that accepts the metadata, with no handle resolver configured', async () => {
+    const oauth = await createBrowserOAuth({
+      baseUrl: 'https://unifont.dev',
+      redirectPath: '/stack',
+      name: 'unifont.dev',
+      scopes,
+    })
+    expect(oauth.client.clientMetadata.client_id).toBe('https://unifont.dev/oauth-client-metadata.json')
+    expect(oauth.client.clientMetadata.scope).toBe('atproto repo:dev.example.project')
   })
 })
