@@ -2,20 +2,28 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const DID = 'did:plc:jbeaa5kdaladzwq3r7f5xgwe'
 
-/** A fresh copy of the module, so its memoised `node:dns` probe runs again. */
 async function identity() {
   vi.resetModules()
   return await import('../src/identity.ts')
 }
 
+/** Stand in for the `dns/promises` built-in, or for a runtime that has none. */
+function stubNodeDns(resolveTxt?: (name: string) => Promise<string[][]>) {
+  vi.spyOn(process, 'getBuiltinModule').mockImplementation(((id: string) => {
+    if (id === 'dns/promises')
+      return resolveTxt && { resolveTxt }
+    throw new Error(`unexpected built-in ${id}`)
+  }) as typeof process.getBuiltinModule)
+}
+
 afterEach(() => {
   vi.unstubAllGlobals()
-  vi.doUnmock('node:dns/promises')
+  vi.restoreAllMocks()
 })
 
 describe('handle resolution', () => {
   it('reads the _atproto TXT record through node:dns when there is one', async () => {
-    vi.doMock('node:dns/promises', () => ({ resolveTxt: async () => [[`did=${DID}`]] }))
+    stubNodeDns(async () => [[`did=${DID}`]])
     const calls: string[] = []
     vi.stubGlobal('fetch', ((input: RequestInfo | URL) => {
       const url = String(input)
@@ -31,9 +39,7 @@ describe('handle resolution', () => {
   })
 
   it('falls back to DNS over HTTPS where node:dns does not exist', async () => {
-    vi.doMock('node:dns/promises', () => {
-      throw new Error('No such module "node:dns/promises"')
-    })
+    stubNodeDns()
     const calls: string[] = []
     vi.stubGlobal('fetch', ((input: RequestInfo | URL) => {
       const url = String(input)
@@ -55,9 +61,7 @@ describe('handle resolution', () => {
   })
 
   it('carries on to the well-known file when DNS over HTTPS answers nothing', async () => {
-    vi.doMock('node:dns/promises', () => {
-      throw new Error('No such module "node:dns/promises"')
-    })
+    stubNodeDns()
     vi.stubGlobal('fetch', ((input: RequestInfo | URL) => {
       const url = String(input)
       if (url.includes('dns-query'))
@@ -78,7 +82,7 @@ const doc = (did: string, service: string, extra: Record<string, unknown> = {}) 
 
 /** Stub `fetch` to serve DID documents, recording every URL requested. */
 function serve(routes: Record<string, unknown>) {
-  vi.doMock('node:dns/promises', () => ({ resolveTxt: async () => [] }))
+  stubNodeDns(async () => [])
   const calls: string[] = []
   vi.stubGlobal('fetch', ((input: RequestInfo | URL) => {
     const url = String(input)
