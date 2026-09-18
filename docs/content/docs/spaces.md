@@ -19,11 +19,14 @@ await airspace.workspace.projects.publish(draft.rkey, { ifMatch: draft.cid })
 await airspace.workspace.projects.publish(draft.rkey, { move: true }) // and drop the draft
 await airspace.workspace.projects.publish(draft.rkey, { to: airspace.review.projects }) // into another space instead
 await airspace.projects.delete(draft.rkey) // unpublish
+
 const live = await airspace.workspace.projects.published() // keys that exist in both
 await airspace.workspace.supported() // false on most PDSes today
 ```
 
 A published copy is identical to its draft, down to the content hash, so `ifMatch: draft.cid` means "only if nobody has edited the public record since". Pointers between drafts are stored as plain AT URIs, so a published copy keeps them.
+
+`to` takes another client of the same collection, in this airspace: publishing `projects` into `categories` throws. Space writes take no swap parameter, so `ifMatch` with a space target throws too. `move` is a write followed by a delete rather than one operation, and nothing rolls the write back if the delete fails.
 
 Without support, a space call throws [`SpacesUnsupportedError`](/docs/errors).
 

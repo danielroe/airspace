@@ -79,15 +79,19 @@ interface Migrates<S extends RecordSchema, M> {
   migrate: (transform: (value: Value<S>, record: AirspaceRecord<S, M>) => RecordInput<S>, options?: MigrateOptions) => Promise<MigrateReport>
 }
 
-/** The same collection somewhere else: `get` pins the schema, `put` is what `publish` calls. */
+/**
+ * The same collection somewhere else, as another client of this airspace.
+ *
+ * `get` is not called; it is there so a client of a different collection does not match.
+ */
 export type PublishTarget<S extends RecordSchema> = IsSingleton<S> extends true
   ? { get: () => Promise<AirspaceRecord<S, any> | null>, put: (value: RecordInput<S>, options?: SpaceWriteOptions) => Promise<WriteResult<S>> }
   : { get: (rkey: InferRecordKey<S>) => Promise<AirspaceRecord<S, any> | null>, put: (rkey: InferRecordKey<S>, value: RecordInput<S>, options?: SpaceWriteOptions) => Promise<WriteResult<S>> }
 
 export interface PublishOptions<S extends RecordSchema> extends WriteOptions {
-  /** Where to write. Defaults to the public repo. A space takes no `ifMatch`, so it is ignored there. */
+  /** Where to write. Defaults to the public repo. Passing `ifMatch` with a space target throws. */
   to?: PublishTarget<S>
-  /** Delete the draft once written. Two calls, so a failure between them leaves both. */
+  /** Delete the draft once written. A write and a delete, with no way to swap on the delete, so a failure between them leaves both. */
   move?: boolean
   /** Adjust the value on its way over. */
   transform?: (value: Value<S>) => RecordInput<S>
@@ -108,7 +112,7 @@ export type SingletonCollection<S extends RecordSchema, R extends Relations, M =
 
 /** Extra methods on collections inside a space. */
 export interface SpaceExtras<S extends RecordSchema> {
-  /** Copy the record into the public repo at the same key, leaving the draft in place. */
+  /** Write the record at the same key into the public repo, or into `to`, optionally dropping the draft. */
   publish: IsSingleton<S> extends true
     ? (options?: PublishOptions<S>) => Promise<WriteResult<S>>
     : (rkey: InferRecordKey<S>, options?: PublishOptions<S>) => Promise<WriteResult<S>>
@@ -152,6 +156,8 @@ export const INTERNAL: unique symbol = Symbol('airspace.internal')
 
 interface InternalClient {
   schema: RecordSchema
+  /** `com.atproto.space` writes take no swap parameter. */
+  inSpace: boolean
   /** The key of a singleton collection. */
   fixedRkey?: string
   prepare: (value: unknown, operation: 'create' | 'put', rkey?: string) => Promise<LexMap>
@@ -374,9 +380,14 @@ export function createCollectionClient<S extends RecordSchema, R extends Relatio
     const rkey = typeof args[0] === 'string' ? args[0] : fixedRkey!
     const options = (typeof args[0] === 'string' ? args[1] : args[0]) ?? {}
     const target = (options.to ?? ctx.publishTarget!(collection)) as unknown as AnyClient
+    const internal = (target as Partial<AnyClient>)[INTERNAL]
+    if (!internal)
+      throw new AirspaceError(`${context(rkey)} can only be published into a collection of the same airspace`)
     // Lexicon objects are open, so a value of one collection can validate in another: the type on `to` is not enough.
-    if (target[INTERNAL].schema.$type !== schema.$type)
-      throw new AirspaceError(`${context(rkey)} cannot be published into ${target[INTERNAL].schema.$type}`)
+    if (internal.schema.$type !== schema.$type)
+      throw new AirspaceError(`${context(rkey)} cannot be published into ${internal.schema.$type}`)
+    if (options.ifMatch && internal.inSpace)
+      throw new AirspaceError(`${context(rkey)} cannot be published with \`ifMatch\` into a space, which takes no swap parameter`)
     const draft = await get(rkey)
     if (!draft)
       throw new AirspaceError(`${context(rkey)} not found in ${(await ctx.backend()).location}`)
@@ -438,7 +449,7 @@ export function createCollectionClient<S extends RecordSchema, R extends Relatio
     api.publish = publish
     api.published = published
   }
-  api[INTERNAL] = { schema, fixedRkey, prepare: (value, operation, rkey) => prepare(value as RecordInput<S>, operation, rkey), invalidate } satisfies InternalClient
+  api[INTERNAL] = { schema, inSpace: !!ctx.publishTarget, fixedRkey, prepare: (value, operation, rkey) => prepare(value as RecordInput<S>, operation, rkey), invalidate } satisfies InternalClient
   return api as unknown as AnyClient
 }
 

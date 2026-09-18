@@ -240,6 +240,7 @@ describe('space client', () => {
 
     // @ts-expect-error a different collection is not a valid target
     await expect(airspace.workspace.projects.publish(draft.rkey, { to: airspace.categories, move: true })).rejects.toThrow(/cannot be published into dev.example.projectCategory/)
+    await expect(airspace.workspace.projects.publish(draft.rkey, { to: { get: async () => null, put: async () => ({ } as any) }, move: true })).rejects.toThrow(/same airspace/)
     expect(await airspace.workspace.projects.get(draft.rkey)).not.toBeNull()
 
     const moved = await airspace.workspace.projects.publish(draft.rkey, { move: true })
@@ -267,6 +268,13 @@ describe('space client', () => {
     const reviewed = await airspace.review.projects.get(draft.rkey)
     expect(reviewed?.value.name).toBe('In review')
     expect((await airspace.review.projects.resolve(reviewed!, 'category'))?.value.name).toBe('Ready')
+
+    const again = await airspace.workspace.projects.create({ name: 'In review', category: { uri: cat.uri, cid: cat.cid }, createdAt: reviewed!.value.createdAt }, { rkey: draft.rkey })
+    await expect(airspace.workspace.projects.publish(again.rkey, { to: airspace.review.projects, ifMatch: reviewed!.cid })).rejects.toThrow(/takes no swap parameter/)
+
+    const unchanged = await airspace.workspace.projects.publish(again.rkey, { to: airspace.review.projects, move: true, ifChanged: true })
+    expect(unchanged.changed).toBe(false)
+    expect(await airspace.workspace.projects.get(again.rkey)).toBeNull()
   })
 
   it('offers no ifMatch in a space and guards publish with the draft CID', async () => {
