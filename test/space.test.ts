@@ -231,6 +231,65 @@ describe('space client', () => {
     expectTypeOf(airspace.projects).not.toHaveProperty('publish')
   })
 
+  it('publishes as a move, dropping the draft', async () => {
+    const { account, airspace } = await setup()
+    await airspace.workspace.manage.ensure()
+    const cat = await airspace.categories.create({ name: 'Ready', createdAt: now() })
+    const draft = await airspace.workspace.projects.create({ name: 'Launch', category: { uri: cat.uri, cid: cat.cid }, createdAt: now() })
+    const put = airspace.projects.put
+
+    // @ts-expect-error a different collection is not a valid target
+    await expect(airspace.workspace.projects.publish(draft.rkey, { to: airspace.categories, move: true })).rejects.toThrow(/cannot be published into dev.example.projectCategory/)
+    await expect(airspace.workspace.projects.publish(draft.rkey, { to: { get: async () => null, put: async () => ({ } as any) }, move: true })).rejects.toThrow(/same airspace/)
+
+    const other = createAirspace({ identity: { did: account.did, service: pds.service }, collections: { projects, categories }, spaces: { workspace }, session: account.session })
+    await expect(airspace.workspace.projects.publish(draft.rkey, { to: other.projects, move: true })).rejects.toThrow(/same airspace/)
+    await expect(airspace.workspace.projects.publish(draft.rkey, { to: airspace.workspace.projects, move: true })).rejects.toThrow(/where it already is/)
+    expect(await airspace.workspace.projects.get(draft.rkey)).not.toBeNull()
+
+    const edited = vi.spyOn(airspace.projects, 'put').mockImplementationOnce(async (rkey, value, options) => {
+      await airspace.workspace.projects.put(draft.rkey, { name: 'Edited draft', category: { uri: cat.uri, cid: cat.cid }, createdAt: now() })
+      return put.call(airspace.projects, rkey, value, options)
+    })
+    await expect(airspace.workspace.projects.publish(draft.rkey, { move: true })).rejects.toBeInstanceOf(ConflictError)
+    expect((await airspace.workspace.projects.get(draft.rkey))?.value.name).toBe('Edited draft')
+    edited.mockRestore()
+    await airspace.workspace.projects.put(draft.rkey, { name: 'Launch', category: { uri: cat.uri, cid: cat.cid }, createdAt: now() })
+
+    const moved = await airspace.workspace.projects.publish(draft.rkey, { move: true })
+    expect(moved.rkey).toBe(draft.rkey)
+    expect(await airspace.workspace.projects.get(draft.rkey)).toBeNull()
+    expect((await airspace.projects.get(draft.rkey))?.value.name).toBe('Launch')
+    await expect(airspace.workspace.projects.publish(draft.rkey)).rejects.toThrow(/not found/)
+
+    await airspace.projects.delete(draft.rkey)
+    expect(await airspace.projects.get(draft.rkey)).toBeNull()
+  })
+
+  it('publishes into another space', async () => {
+    const account = await pds.account()
+    const review = defineSpace({ nsid: 'dev.example.review', key: 'literal:self', collections: ['dev.example.project'] }, { collections: { projects } })
+    const airspace = createAirspace({ identity: { did: account.did, service: pds.service }, spaces: { workspace, review }, session: account.session })
+    await airspace.workspace.manage.ensure()
+    await airspace.review.manage.ensure()
+    const cat = await airspace.categories.create({ name: 'Ready', createdAt: now() })
+    const draft = await airspace.workspace.projects.create({ name: 'Launch', category: { uri: cat.uri, cid: cat.cid }, createdAt: now() })
+
+    await airspace.workspace.projects.publish(draft.rkey, { to: airspace.review.projects, move: true, transform: v => ({ ...v, name: 'In review' }) })
+    expect(await airspace.workspace.projects.get(draft.rkey)).toBeNull()
+    expect(await airspace.projects.get(draft.rkey)).toBeNull()
+    const reviewed = await airspace.review.projects.get(draft.rkey)
+    expect(reviewed?.value.name).toBe('In review')
+    expect((await airspace.review.projects.resolve(reviewed!, 'category'))?.value.name).toBe('Ready')
+
+    const again = await airspace.workspace.projects.create({ name: 'In review', category: { uri: cat.uri, cid: cat.cid }, createdAt: reviewed!.value.createdAt }, { rkey: draft.rkey })
+    await expect(airspace.workspace.projects.publish(again.rkey, { to: airspace.review.projects, ifMatch: reviewed!.cid })).rejects.toThrow(/takes no swap parameter/)
+
+    const unchanged = await airspace.workspace.projects.publish(again.rkey, { to: airspace.review.projects, move: true, ifChanged: true })
+    expect(unchanged.changed).toBe(false)
+    expect(await airspace.workspace.projects.get(again.rkey)).toBeNull()
+  })
+
   it('offers no ifMatch in a space and guards publish with the draft CID', async () => {
     const { airspace } = await setup()
     await airspace.workspace.manage.ensure()
