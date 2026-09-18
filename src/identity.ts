@@ -71,15 +71,15 @@ function didFromTxt(records: Iterable<string>): DidString | undefined {
 }
 
 type Resolver = (name: string) => Promise<string[][]>
-let nodeResolver: Promise<Resolver | undefined> | undefined
-function loadNodeResolver(): Promise<Resolver | undefined> {
-  return nodeResolver ??= import('node:dns/promises').then(dns => dns.resolveTxt as Resolver, () => undefined)
+function loadNodeResolver(): Resolver | undefined {
+  // eslint-disable-next-line node/prefer-global/process -- we want to keep node builtins out of import graph
+  return globalThis.process?.getBuiltinModule?.('dns/promises')?.resolveTxt
 }
 
 // `node:dns` is absent at the edge and in a browser, so fall back to DNS over HTTPS there.
 async function resolveHandleDns(handle: string): Promise<DidString | undefined> {
   const name = `_atproto.${handle}`
-  const resolveTxt = await loadNodeResolver()
+  const resolveTxt = loadNodeResolver()
   if (resolveTxt) {
     try {
       return didFromTxt((await resolveTxt(name)).map(chunks => chunks.join('')))

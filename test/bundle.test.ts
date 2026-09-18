@@ -119,10 +119,33 @@ describe('bundle boundaries', () => {
     })
     const code = result.outputFiles[0]!.text
 
-    // A static one would break the worker on load; the DNS probe is dynamic and falls back to DoH.
     expect(code).not.toMatch(/^import[^;]*["']node:/m)
-    expect(code.match(/import\("node:[^"]+"\)/g)).toEqual(['import("node:dns/promises")'])
+    expect(code).not.toMatch(/import\("node:[^"]+"\)/)
     expect(code).not.toMatch(/\brequire\("node:/)
+  })
+
+  it.for([
+    ['airspace', `export * from './src/index.ts'`],
+    ['airspace/oauth/browser', `export * from './src/oauth/browser.ts'`],
+    ['airspace/oauth/metadata', `export * from './src/oauth/metadata.ts'`],
+    ['airspace/live', `export * from './src/live.ts'`],
+    ['airspace/lexicon', `export * from './src/lexicon.ts'`],
+    ['airspace/plugins/markdown', `export * from './src/plugins/markdown.ts'`],
+    ['airspace/plugins/timestamps', `export * from './src/plugins/timestamps.ts'`],
+  ])('reaches no Node built-in from %s in a browser', async ([, contents]) => {
+    const result = await build({
+      stdin: { contents: contents!, resolveDir: ROOT, loader: 'ts' },
+      bundle: true,
+      format: 'esm',
+      platform: 'browser',
+      conditions: ['worker', 'browser'],
+      write: false,
+      outdir: 'out',
+      metafile: true,
+    })
+    expect(result.warnings).toEqual([])
+    expect(Object.values(result.metafile.outputs).flatMap(o => o.imports.map(i => i.path)).filter(p => p.startsWith('node:'))).toEqual([])
+    expect(result.outputFiles[0]!.text).not.toMatch(/\b(?:import|require)\s*\(\s*["'`]node:/)
   })
 
   it('keeps airspace/live runnable in a browser', async () => {
