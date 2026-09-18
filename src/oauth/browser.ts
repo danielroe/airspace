@@ -1,9 +1,11 @@
 import type { BrowserOAuthClient, OAuthClientMetadataInput, OAuthSession } from '@atproto/oauth-client-browser'
+import type { DidString } from '../types.ts'
 import type { ClientMetadataOptions } from './metadata.ts'
 import { clientMetadata as buildClientMetadata } from './metadata.ts'
 import { consentScope } from './scope.ts'
 
 export { spacesSupported } from '../supported.ts'
+export type { DidString } from '../types.ts'
 export type { ClientMetadataOptions } from './metadata.ts'
 export type { OAuthSession } from '@atproto/oauth-client-browser'
 
@@ -21,7 +23,8 @@ export interface BrowserOAuthOptions extends ClientMetadataOptions {
 export interface BrowserOAuthResult {
   /** Works as `createAirspace({ session })`. */
   session: OAuthSession
-  did: string
+  /** Works as `createAirspace({ identity: { did } })`. */
+  did: DidString
   state: string | null
 }
 

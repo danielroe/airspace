@@ -1,10 +1,12 @@
 import type { NodeOAuthClient, NodeSavedSessionStore, NodeSavedStateStore, OAuthClientMetadataInput, OAuthSession } from '@atproto/oauth-client-node'
 import type { ClientMetadataOptions } from './oauth/metadata.ts'
+import type { DidString } from './types.ts'
 import { clientMetadata as buildClientMetadata } from './oauth/metadata.ts'
 import { consentScope } from './oauth/scope.ts'
 
 export type { ClientMetadataOptions } from './oauth/metadata.ts'
 export { spacesSupported } from './supported.ts'
+export type { DidString } from './types.ts'
 export type { NodeSavedSession, NodeSavedSessionStore, NodeSavedState, NodeSavedStateStore, OAuthSession } from '@atproto/oauth-client-node'
 
 export interface OAuthOptions extends ClientMetadataOptions {
@@ -28,8 +30,8 @@ export interface OAuth {
   readonly client: NodeOAuthClient
   /** URL to redirect the user to. `scopes` must be a subset of the client's. */
   authorize: (identifier: string, options?: { state?: string, scopes?: readonly string[] }) => Promise<URL>
-  /** The session works as `createAirspace({ session })`. */
-  callback: (params: URLSearchParams) => Promise<{ session: OAuthSession, did: string, state: string | null }>
+  /** The session works as `createAirspace({ session })`, and `did` as `createAirspace({ identity: { did } })`. */
+  callback: (params: URLSearchParams) => Promise<{ session: OAuthSession, did: DidString, state: string | null }>
   restore: (did: string) => Promise<OAuthSession>
   revoke: (did: string) => Promise<void>
 }

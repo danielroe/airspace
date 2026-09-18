@@ -1,4 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { OAuth } from '../src/oauth.ts'
+import type { BrowserOAuthResult } from '../src/oauth/browser.ts'
+import type { Identity } from '../src/types.ts'
+import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
 
 import { defineCollection, defineSpace, scopesFor } from '../src/index.ts'
 import { clientMetadata, createOAuth } from '../src/oauth.ts'
@@ -174,6 +177,11 @@ describe('createBrowserOAuth', () => {
     })
     expect(oauth.client.clientMetadata.client_id).toBe('https://unifont.dev/oauth-client-metadata.json')
     expect(oauth.client.clientMetadata.scope).toBe('atproto repo:dev.example.project')
+  })
+
+  it('returns a did that satisfies createAirspace identity', () => {
+    expectTypeOf<BrowserOAuthResult['did']>().toExtend<Identity['did']>()
+    expectTypeOf<Awaited<ReturnType<OAuth['callback']>>['did']>().toExtend<Identity['did']>()
   })
 
   it('narrows a sign-in to a subset of the declared scopes, never beyond', async () => {
