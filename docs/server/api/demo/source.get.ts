@@ -2,7 +2,7 @@ import { useStorage } from 'nitro/storage'
 import { createError, defineEventHandler, getQuery } from 'nuxt/server'
 import { parseSiteMarkdown } from '../../utils/markdown.ts'
 
-const bases: Record<string, string> = { route: 'assets:demoRoutes', shared: 'assets:demoShared' }
+const bases: Record<string, string> = { route: 'assets:demoRoutes', shared: 'assets:demoShared', proxy: 'assets:demoProxy' }
 
 export default defineEventHandler(async (event) => {
   const { base = 'route', file = '' } = getQuery<{ base?: string, file?: string }>(event)

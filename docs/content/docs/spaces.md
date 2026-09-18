@@ -21,7 +21,7 @@ await airspace.workspace.projects.publish(draft.rkey, { to: airspace.review.proj
 await airspace.projects.delete(draft.rkey) // unpublish
 
 const live = await airspace.workspace.projects.published() // keys that exist in both
-await airspace.workspace.supported() // false on most PDSes today
+await airspace.workspace.supported() // false on most PDSes today, needs no session
 ```
 
 A published copy is identical to its draft, down to the content hash, so `ifMatch: draft.cid` means "only if nobody has edited the public record since". Pointers between drafts are stored as plain AT URIs, so a published copy keeps them.
@@ -45,6 +45,8 @@ await airspace.workspace.manage.info() // how is it configured? `null` until `en
 ```
 
 You only need `ensure()` for a shared space. Writing to your own space creates it but leaves it unconfigured.
+
+Over OAuth each operation is a separate grant, asked for with `manage` in [`scopesFor`](/docs/oauth): `update()` and a second `ensure()` need `update`, and `delete()` needs `delete`.
 
 > [!WARNING]
 > Blobs uploaded into a space are currently readable through the public `sync.getBlob` endpoint ([atproto#5435](https://github.com/bluesky-social/atproto/issues/5435)). Don't put images in a space that you'd mind being seen.

@@ -1,0 +1,22 @@
+{
+  "name": "airspace-demo-pds",
+  "type": "module",
+  "private": true,
+  "description": "The public PDS behind the getair.space demo: permissioned spaces, invite-only, throwaway accounts.",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node local.mjs",
+    "invite": "node invite.mjs",
+    "smoke": "node smoke.mjs",
+    "reset": "node reset.mjs"
+  },
+  "dependencies": {
+    "@atproto/pds": "0.0.0-spaces-alpha-20260910230440"
+  },
+  "devDependencies": {
+    "@did-plc/server": "^0.0.1"
+  }
+}

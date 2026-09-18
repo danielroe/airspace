@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { defineCollection, defineSpace, scopesFor } from '../src/index.ts'
 import { clientMetadata, createOAuth } from '../src/oauth.ts'
+import { createBrowserOAuth } from '../src/oauth/browser.ts'
+import { clientMetadata as bareClientMetadata } from '../src/oauth/metadata.ts'
 import { authFull, gallery, location, project, projectCategory } from './fixtures/lex.ts'
 
 const categories = defineCollection(projectCategory)
@@ -10,6 +12,8 @@ const current = defineCollection(location)
 const workspace = defineSpace({ nsid: 'dev.example.workspace', key: 'literal:self', collections: ['dev.example.project'] }, {
   collections: { projects, current },
 })
+const spaceScope = (scopes: string[]): string => scopes.find(s => s.startsWith('space:'))!
+
 describe('scopesFor', () => {
   it('covers collections and spaces beyond their declaration', () => {
     expect(scopesFor({ collections: { projects, categories }, spaces: { workspace } })).toEqual([
@@ -19,6 +23,26 @@ describe('scopesFor', () => {
       'space:dev.example.workspace?skey=self&collection=dev.example.location&manage=create',
     ])
     expect(scopesFor({ collections: [projects] })).toEqual(['atproto', 'repo:dev.example.project'])
+  })
+
+  it('asks for the manage operations the app needs on its own spaces', () => {
+    expect(scopesFor({ spaces: { workspace }, manage: ['create', 'delete'] })).toEqual([
+      'atproto',
+      'space:dev.example.workspace?skey=self&collection=dev.example.location&manage=create&manage=delete',
+    ])
+    expect(spaceScope(scopesFor({ spaces: { workspace }, manage: [] }))).not.toContain('manage=')
+    const foreign = defineSpace({ nsid: 'dev.example.workspace', key: 'literal:self' }, { authority: 'did:plc:someoneelse', collections: { projects } })
+    expect(spaceScope(scopesFor({ spaces: { foreign }, manage: ['delete'] }))).not.toContain('manage=')
+  })
+
+  it('takes manage operations per space, keyed as the spaces are', () => {
+    const archive = defineSpace({ nsid: 'dev.example.archive', key: 'literal:self', collections: ['dev.example.project'] }, { collections: { projects } })
+    expect(scopesFor({ spaces: { workspace, archive }, manage: { archive: ['create', 'delete'] } })).toEqual([
+      'atproto',
+      'space:dev.example.workspace?skey=self&collection=dev.example.location&manage=create',
+      'space:dev.example.archive?skey=self&manage=create&manage=delete',
+    ])
+    expect(scopesFor({ spaces: [archive], manage: { 'dev.example.archive': ['update'] } })).toContain('space:dev.example.archive?skey=self&manage=update')
   })
 
   it('narrows blob scope to the accepted MIME patterns, behind a ref thunk', () => {
@@ -66,6 +90,11 @@ describe('clientMetadata', () => {
       dpop_bound_access_tokens: true,
     })
   })
+
+  it('serves one document, whichever entry point builds it', () => {
+    const options = { baseUrl: 'https://unifont.dev', redirectPath: '/stack', name: 'unifont.dev', scopes } as const
+    expect(bareClientMetadata(options)).toEqual(clientMetadata(options))
+  })
 })
 
 describe('createOAuth', () => {
@@ -92,6 +121,25 @@ describe('createOAuth', () => {
     await expect(oauth.restore('did:plc:nobody')).rejects.toThrow()
   })
 
+  it('narrows a consent to a subset of the declared scopes, never beyond', async () => {
+    const all = scopesFor({ collections: [projects], spaces: [workspace] })
+    const oauth = await createOAuth({
+      baseUrl: 'https://roe.dev',
+      redirectPath: '/cb',
+      name: 'test',
+      scopes: all,
+      stores: { session: { get: async () => undefined, set: async () => {}, del: async () => {} } },
+    })
+    const spy = vi.spyOn(oauth.client, 'authorize').mockResolvedValue(new URL('https://pds.example/authorize'))
+    await oauth.authorize('alice.test', { scopes: ['atproto', 'repo:dev.example.project'] })
+    expect(spy).toHaveBeenCalledWith('alice.test', { scope: 'atproto repo:dev.example.project', state: undefined })
+    await oauth.authorize('alice.test')
+    expect(spy).toHaveBeenLastCalledWith('alice.test', { scope: all.join(' '), state: undefined })
+    await expect(oauth.authorize('alice.test', { scopes: ['atproto', 'repo:dev.example.other'] })).rejects.toThrow(`"repo:dev.example.other" is not among the client's scopes`)
+    await expect(oauth.authorize('alice.test', { scopes: [''] })).rejects.toThrow('"" is not among the client\'s scopes')
+    await expect(oauth.authorize('alice.test', { scopes: [] })).rejects.toThrow('every consent must include the "atproto" scope')
+  })
+
   it('resolves identities where it is told to, so a local PDS works', async () => {
     const oauth = await createOAuth({
       baseUrl: 'http://127.0.0.1:3000',
@@ -106,5 +154,41 @@ describe('createOAuth', () => {
     await oauth.client.identityResolver.resolve('alice.test').catch(() => {})
     await oauth.client.identityResolver.resolve('did:plc:o7sgbrqrvs3sjizryttaqml4').catch(() => {})
     expect(fetchedHosts).toEqual(['localhost:2583', 'localhost:2582'])
+  })
+})
+
+describe('createBrowserOAuth', () => {
+  const scopes = scopesFor({ collections: [projects] })
+
+  beforeEach(() => {
+    vi.stubGlobal('indexedDB', { open: () => ({ addEventListener() {}, removeEventListener() {} }) })
+  })
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('builds a BrowserOAuthClient that accepts the metadata, with no handle resolver configured', async () => {
+    const oauth = await createBrowserOAuth({
+      baseUrl: 'https://unifont.dev',
+      redirectPath: '/stack',
+      name: 'unifont.dev',
+      scopes,
+    })
+    expect(oauth.client.clientMetadata.client_id).toBe('https://unifont.dev/oauth-client-metadata.json')
+    expect(oauth.client.clientMetadata.scope).toBe('atproto repo:dev.example.project')
+  })
+
+  it('narrows a sign-in to a subset of the declared scopes, never beyond', async () => {
+    const all = scopesFor({ collections: [projects], spaces: [workspace] })
+    const oauth = await createBrowserOAuth({
+      baseUrl: 'https://unifont.dev',
+      redirectPath: '/stack',
+      name: 'unifont.dev',
+      scopes: all,
+    })
+    const spy = vi.spyOn(oauth.client, 'signInRedirect').mockResolvedValue(undefined as never)
+    await oauth.signIn('alice.test', { scopes: ['atproto', 'repo:dev.example.project'] })
+    expect(spy).toHaveBeenCalledWith('alice.test', { scope: 'atproto repo:dev.example.project', state: undefined, signal: undefined })
+    await oauth.signIn('alice.test')
+    expect(spy).toHaveBeenLastCalledWith('alice.test', { scope: all.join(' '), state: undefined, signal: undefined })
+    await expect(oauth.signIn('alice.test', { scopes: ['repo:dev.example.project'] })).rejects.toThrow('every consent must include the "atproto" scope')
   })
 })

@@ -38,6 +38,7 @@ useHead({
           </NuxtLink>
         </p>
         <nav>
+          <DocsSearch />
           <NuxtLink to="/docs">
             docs
           </NuxtLink>

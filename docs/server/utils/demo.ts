@@ -13,11 +13,16 @@ export interface DemoAccount {
   password: string
 }
 
-const cookie = () => ({ password: useRuntimeConfig().sessionPassword, name: 'airspace-demo' })
+const cookie = () => ({
+  password: useRuntimeConfig().sessionPassword,
+  name: 'airspace-demo',
+  cookie: { secure: !import.meta.dev },
+})
 
 const ttl = 15 * 60_000
 const limit = 100
-const instances = new Map<string, { at: number, airspace: Promise<DemoAirspace> }>()
+const instances = new Map<string, { at: number, instance: Promise<DemoInstance> }>()
+const grants = new Map<string, { at: number, account: DemoAccount }>()
 
 export const demoSession = (event: RequestEvent) => useSession<Partial<DemoAccount>>(toNuxtRequestEvent(event), cookie())
 
@@ -62,28 +67,69 @@ export async function createAccount(event: RequestEvent): Promise<DemoAccount> {
 
 export async function endSession(event: RequestEvent): Promise<void> {
   const session = await demoSession(event)
-  if (session.data.did)
+  if (session.data.did) {
     instances.delete(session.data.did)
+    for (const [token, grant] of grants) {
+      if (grant.account.did === session.data.did)
+        grants.delete(token)
+    }
+  }
   await session.clear()
 }
 
-function build(account: DemoAccount) {
-  const service = useRuntimeConfig().pdsService
-  return passwordSession({ service, identifier: account.handle, password: account.password })
-    .then(session => createAirspace({
-      identity: { did: account.did as `did:${string}:${string}`, service },
-      collections: { profile },
-      spaces: { workspace },
-      plugins: [timestamps()],
-      session,
-    }))
+/** A bearer token for the demo proxy, in place of the account password. */
+export async function issueGrant(event: RequestEvent): Promise<{ token: string, expiresAt: string }> {
+  const account = await requireAccount(event)
+  const now = Date.now()
+  for (const [token, grant] of grants) {
+    if (now - grant.at > ttl)
+      grants.delete(token)
+    else if (grant.account.did === account.did)
+      grants.delete(token)
+  }
+  if (grants.size >= limit)
+    grants.delete(grants.keys().next().value!)
+  const token = randomBytes(24).toString('base64url')
+  grants.set(token, { at: now, account })
+  return { token, expiresAt: new Date(now + ttl).toISOString() }
 }
 
-export type DemoAirspace = Awaited<ReturnType<typeof build>>
+export function accountForGrant(token: string | undefined): DemoAccount | undefined {
+  const grant = token ? grants.get(token) : undefined
+  if (!grant)
+    return undefined
+  if (Date.now() - grant.at > ttl) {
+    grants.delete(token!)
+    return undefined
+  }
+  grant.at = Date.now()
+  return grant.account
+}
 
-export const useDemoAirspace = async (event: RequestEvent): Promise<DemoAirspace> => await airspaceFor(await requireAccount(event))
+async function build(account: DemoAccount) {
+  const service = useRuntimeConfig().pdsService
+  const session = await passwordSession({ service, identifier: account.handle, password: account.password })
+  const airspace = createAirspace({
+    identity: { did: account.did as `did:${string}:${string}`, service },
+    collections: { profile },
+    spaces: { workspace },
+    plugins: [timestamps()],
+    session,
+  })
+  return { session, airspace }
+}
 
-export async function airspaceFor(account: DemoAccount): Promise<DemoAirspace> {
+type DemoInstance = Awaited<ReturnType<typeof build>>
+export type DemoAirspace = DemoInstance['airspace']
+export type DemoSession = DemoInstance['session']
+
+export const useDemoAirspace = async (event: RequestEvent): Promise<DemoAirspace> => (await instanceFor(await requireAccount(event))).airspace
+
+export const airspaceFor = async (account: DemoAccount): Promise<DemoAirspace> => (await instanceFor(account)).airspace
+
+export const sessionFor = async (account: DemoAccount): Promise<DemoSession> => (await instanceFor(account)).session
+
+async function instanceFor(account: DemoAccount): Promise<DemoInstance> {
   const now = Date.now()
   for (const [did, entry] of instances) {
     if (now - entry.at > ttl)
@@ -92,13 +138,13 @@ export async function airspaceFor(account: DemoAccount): Promise<DemoAirspace> {
   const hit = instances.get(account.did)
   if (hit) {
     hit.at = now
-    return await hit.airspace
+    return await hit.instance
   }
   if (instances.size >= limit)
     instances.delete(instances.keys().next().value!)
-  const airspace = build(account)
-  instances.set(account.did, { at: now, airspace })
-  return await airspace.catch((error) => {
+  const instance = build(account)
+  instances.set(account.did, { at: now, instance })
+  return await instance.catch((error) => {
     instances.delete(account.did)
     throw error
   })

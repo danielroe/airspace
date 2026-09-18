@@ -1,15 +1,13 @@
 import type { NodeOAuthClient, NodeSavedSessionStore, NodeSavedStateStore, OAuthClientMetadataInput, OAuthSession } from '@atproto/oauth-client-node'
+import type { ClientMetadataOptions } from './oauth/metadata.ts'
+import { clientMetadata as buildClientMetadata } from './oauth/metadata.ts'
+import { consentScope } from './oauth/scope.ts'
 
+export type { ClientMetadataOptions } from './oauth/metadata.ts'
+export { spacesSupported } from './supported.ts'
 export type { NodeSavedSession, NodeSavedSessionStore, NodeSavedState, NodeSavedStateStore, OAuthSession } from '@atproto/oauth-client-node'
 
-export interface OAuthOptions {
-  /** App origin. Loopback origins get an inline `client_id`. */
-  baseUrl: string
-  redirectPath: string
-  name: string
-  /** See `scopesFor()`. */
-  scopes: readonly string[]
-  metadataPath?: string
+export interface OAuthOptions extends ClientMetadataOptions {
   stores: {
     /** In-flight authorizations. Defaults to memory. */
     state?: NodeSavedStateStore
@@ -28,46 +26,17 @@ export interface OAuth {
   /** Serve at `metadataPath`. */
   readonly metadata: OAuthClientMetadataInput
   readonly client: NodeOAuthClient
-  /** URL to redirect the user to. */
-  authorize: (identifier: string, options?: { state?: string }) => Promise<URL>
+  /** URL to redirect the user to. `scopes` must be a subset of the client's. */
+  authorize: (identifier: string, options?: { state?: string, scopes?: readonly string[] }) => Promise<URL>
   /** The session works as `createAirspace({ session })`. */
   callback: (params: URLSearchParams) => Promise<{ session: OAuthSession, did: string, state: string | null }>
   restore: (did: string) => Promise<OAuthSession>
   revoke: (did: string) => Promise<void>
 }
 
-const LOOPBACK = /^https?:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?$/
-
 /** Metadata for a public, DPoP-bound client. Loopback origins encode it into the `client_id`. */
-export function clientMetadata(options: Pick<OAuthOptions, 'baseUrl' | 'redirectPath' | 'name' | 'scopes' | 'metadataPath'>): OAuthClientMetadataInput {
-  const baseUrl = options.baseUrl.replace(/\/$/, '')
-  const redirectUri = `${baseUrl}${options.redirectPath}`
-  const scope = options.scopes.join(' ')
-  const loopback = LOOPBACK.test(baseUrl)
-
-  let clientId: string
-  if (loopback) {
-    const url = new URL('http://localhost')
-    url.searchParams.set('redirect_uri', redirectUri)
-    url.searchParams.set('scope', scope)
-    clientId = url.toString()
-  }
-  else {
-    clientId = `${baseUrl}${options.metadataPath ?? '/oauth-client-metadata.json'}`
-  }
-
-  return {
-    client_id: clientId,
-    client_name: options.name,
-    ...(loopback ? {} : { client_uri: baseUrl }),
-    redirect_uris: [redirectUri],
-    scope,
-    grant_types: ['authorization_code', 'refresh_token'],
-    response_types: ['code'],
-    token_endpoint_auth_method: 'none',
-    application_type: 'web',
-    dpop_bound_access_tokens: true,
-  }
+export function clientMetadata(options: ClientMetadataOptions): OAuthClientMetadataInput {
+  return buildClientMetadata(options) as OAuthClientMetadataInput
 }
 
 function memoryStore<T>(): { get: (k: string) => Promise<T | undefined>, set: (k: string, v: T) => Promise<void>, del: (k: string) => Promise<void> } {
@@ -95,7 +64,10 @@ export async function createOAuth(options: OAuthOptions): Promise<OAuth> {
   return {
     metadata,
     client,
-    authorize: (identifier, opts) => client.authorize(identifier, { scope: metadata.scope, state: opts?.state }),
+    async authorize(identifier, opts) {
+      const scope = consentScope(options.scopes, opts?.scopes, metadata.scope)
+      return client.authorize(identifier, { scope, state: opts?.state })
+    },
     async callback(params) {
       const { session, state } = await client.callback(params)
       return { session, did: session.did, state }
