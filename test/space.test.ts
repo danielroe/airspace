@@ -232,7 +232,7 @@ describe('space client', () => {
   })
 
   it('publishes as a move, dropping the draft', async () => {
-    const { airspace } = await setup()
+    const { account, airspace } = await setup()
     await airspace.workspace.manage.ensure()
     const cat = await airspace.categories.create({ name: 'Ready', createdAt: now() })
     const draft = await airspace.workspace.projects.create({ name: 'Launch', category: { uri: cat.uri, cid: cat.cid }, createdAt: now() })
@@ -240,6 +240,10 @@ describe('space client', () => {
     // @ts-expect-error a different collection is not a valid target
     await expect(airspace.workspace.projects.publish(draft.rkey, { to: airspace.categories, move: true })).rejects.toThrow(/cannot be published into dev.example.projectCategory/)
     await expect(airspace.workspace.projects.publish(draft.rkey, { to: { get: async () => null, put: async () => ({ } as any) }, move: true })).rejects.toThrow(/same airspace/)
+
+    const other = createAirspace({ identity: { did: account.did, service: pds.service }, collections: { projects, categories }, spaces: { workspace }, session: account.session })
+    await expect(airspace.workspace.projects.publish(draft.rkey, { to: other.projects, move: true })).rejects.toThrow(/same airspace/)
+    await expect(airspace.workspace.projects.publish(draft.rkey, { to: airspace.workspace.projects, move: true })).rejects.toThrow(/where it already is/)
     expect(await airspace.workspace.projects.get(draft.rkey)).not.toBeNull()
 
     const moved = await airspace.workspace.projects.publish(draft.rkey, { move: true })

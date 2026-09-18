@@ -229,6 +229,7 @@ export function createAirspace<
     })
   }
 
+  const origin = {}
   const clients = new Map<string, Map<AnyCollection, AnyClient>>()
   function clientFor(repo: Repo, collection: AnyCollection): AnyClient {
     let byCollection = clients.get(repo.key)
@@ -237,6 +238,7 @@ export function createAirspace<
     let client = byCollection.get(collection)
     if (!client) {
       byCollection.set(collection, client = createCollectionClient(collection, {
+        origin,
         backend: repo.backend,
         identity,
         plugins,

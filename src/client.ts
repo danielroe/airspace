@@ -132,6 +132,8 @@ export type RecordOf<C extends AnyCollectionLike, G = Record<never, never>> = Ai
 type AnyCollectionLike = Collection<any, any, any>
 
 export interface ClientContext {
+  /** Identifies the `createAirspace` call a client belongs to, so `publish` can refuse a target from another one. */
+  origin: object
   backend: () => Promise<Backend>
   identity: () => Promise<Identity>
   plugins: readonly AnyPlugin[]
@@ -156,8 +158,10 @@ export const INTERNAL: unique symbol = Symbol('airspace.internal')
 
 interface InternalClient {
   schema: RecordSchema
+  origin: object
   /** `com.atproto.space` writes take no swap parameter. */
   inSpace: boolean
+  location: () => Promise<string>
   /** The key of a singleton collection. */
   fixedRkey?: string
   prepare: (value: unknown, operation: 'create' | 'put', rkey?: string) => Promise<LexMap>
@@ -381,13 +385,16 @@ export function createCollectionClient<S extends RecordSchema, R extends Relatio
     const options = (typeof args[0] === 'string' ? args[1] : args[0]) ?? {}
     const target = (options.to ?? ctx.publishTarget!(collection)) as unknown as AnyClient
     const internal = (target as Partial<AnyClient>)[INTERNAL]
-    if (!internal)
+    if (!internal || internal.origin !== ctx.origin)
       throw new AirspaceError(`${context(rkey)} can only be published into a collection of the same airspace`)
     // Lexicon objects are open, so a value of one collection can validate in another: the type on `to` is not enough.
     if (internal.schema.$type !== schema.$type)
       throw new AirspaceError(`${context(rkey)} cannot be published into ${internal.schema.$type}`)
     if (options.ifMatch && internal.inSpace)
       throw new AirspaceError(`${context(rkey)} cannot be published with \`ifMatch\` into a space, which takes no swap parameter`)
+    // A move into the collection's own backend would write the record and then delete it again.
+    if (options.move && await internal.location() === (await ctx.backend()).location)
+      throw new AirspaceError(`${context(rkey)} cannot be moved into ${(await ctx.backend()).location}, where it already is`)
     const draft = await get(rkey)
     if (!draft)
       throw new AirspaceError(`${context(rkey)} not found in ${(await ctx.backend()).location}`)
@@ -449,7 +456,7 @@ export function createCollectionClient<S extends RecordSchema, R extends Relatio
     api.publish = publish
     api.published = published
   }
-  api[INTERNAL] = { schema, inSpace: !!ctx.publishTarget, fixedRkey, prepare: (value, operation, rkey) => prepare(value as RecordInput<S>, operation, rkey), invalidate } satisfies InternalClient
+  api[INTERNAL] = { schema, origin: ctx.origin, inSpace: !!ctx.publishTarget, location: async () => (await ctx.backend()).location, fixedRkey, prepare: (value, operation, rkey) => prepare(value as RecordInput<S>, operation, rkey), invalidate } satisfies InternalClient
   return api as unknown as AnyClient
 }
 
