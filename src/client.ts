@@ -9,7 +9,7 @@ import type { AirspaceRecord, Identity, Infer, InferRecordKey, IsSingleton, List
 import { jsonToLex, lexToJson } from '@atproto/lex-json'
 import { LexValidationError } from '@atproto/lex-schema'
 import { MAX_BATCH } from './batch.ts'
-import { AirspaceError, ValidationError } from './errors.ts'
+import { AirspaceError, ConflictError, ValidationError } from './errors.ts'
 import { literalKey } from './model.ts'
 import { applyRead, applyWrite } from './plugin.ts'
 import { TYPE_ONLY } from './type-model.ts'
@@ -91,7 +91,7 @@ export type PublishTarget<S extends RecordSchema> = IsSingleton<S> extends true
 export interface PublishOptions<S extends RecordSchema> extends WriteOptions {
   /** Where to write. Defaults to the public repo. Passing `ifMatch` with a space target throws. */
   to?: PublishTarget<S>
-  /** Delete the draft once written. A write and a delete, with no way to swap on the delete, so a failure between them leaves both. */
+  /** Delete the draft once written. A write and a delete, so a failure between them leaves both, and a draft edited in the meantime is kept and throws `ConflictError`. */
   move?: boolean
   /** Adjust the value on its way over. */
   transform?: (value: Value<S>) => RecordInput<S>
@@ -404,8 +404,15 @@ export function createCollectionClient<S extends RecordSchema, R extends Relatio
     const result = collection.singleton
       ? await (target as unknown as SingletonCollection<S, R>).put(next, write)
       : await (target as unknown as KeyedCollection<S, R>).put(rkey as InferRecordKey<S>, next, write)
-    if (options.move)
-      await del(rkey)
+    if (options.move) {
+      // A space delete takes no swap parameter, so re-read rather than drop an edit made while the write was in flight.
+      invalidate()
+      const current = await get(rkey)
+      if (current && current.cid !== draft.cid)
+        throw new ConflictError(schema.$type, rkey, draft.cid)
+      if (current)
+        await del(rkey)
+    }
     return result
   }
 

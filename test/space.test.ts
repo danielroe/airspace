@@ -236,6 +236,7 @@ describe('space client', () => {
     await airspace.workspace.manage.ensure()
     const cat = await airspace.categories.create({ name: 'Ready', createdAt: now() })
     const draft = await airspace.workspace.projects.create({ name: 'Launch', category: { uri: cat.uri, cid: cat.cid }, createdAt: now() })
+    const put = airspace.projects.put
 
     // @ts-expect-error a different collection is not a valid target
     await expect(airspace.workspace.projects.publish(draft.rkey, { to: airspace.categories, move: true })).rejects.toThrow(/cannot be published into dev.example.projectCategory/)
@@ -245,6 +246,15 @@ describe('space client', () => {
     await expect(airspace.workspace.projects.publish(draft.rkey, { to: other.projects, move: true })).rejects.toThrow(/same airspace/)
     await expect(airspace.workspace.projects.publish(draft.rkey, { to: airspace.workspace.projects, move: true })).rejects.toThrow(/where it already is/)
     expect(await airspace.workspace.projects.get(draft.rkey)).not.toBeNull()
+
+    const edited = vi.spyOn(airspace.projects, 'put').mockImplementationOnce(async (rkey, value, options) => {
+      await airspace.workspace.projects.put(draft.rkey, { name: 'Edited draft', category: { uri: cat.uri, cid: cat.cid }, createdAt: now() })
+      return put.call(airspace.projects, rkey, value, options)
+    })
+    await expect(airspace.workspace.projects.publish(draft.rkey, { move: true })).rejects.toBeInstanceOf(ConflictError)
+    expect((await airspace.workspace.projects.get(draft.rkey))?.value.name).toBe('Edited draft')
+    edited.mockRestore()
+    await airspace.workspace.projects.put(draft.rkey, { name: 'Launch', category: { uri: cat.uri, cid: cat.cid }, createdAt: now() })
 
     const moved = await airspace.workspace.projects.publish(draft.rkey, { move: true })
     expect(moved.rkey).toBe(draft.rkey)
