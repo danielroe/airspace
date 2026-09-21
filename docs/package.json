@@ -23,6 +23,6 @@
   },
   "devDependencies": {
     "pagefind": "1.5.2",
-    "subset-font": "2.7.0"
+    "subset-font": "2.9.0"
   }
 }

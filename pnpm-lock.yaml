@@ -353,7 +353,7 @@ importers:
         version: 0.7.0(rangi@2.2.0)(shiki@4.4.3)(vue@3.5.43(typescript@6.0.3))
       '@nuxt/fonts':
         specifier: https://pkg.pr.new/@nuxt/fonts@35924e7
-        version: https://pkg.pr.new/@nuxt/fonts@35924e7(db0@0.4.1)(esbuild@0.28.2)(ioredis@5.11.1(supports-color@10.2.2))(magic-string@1.4.1)(magicast@0.5.5)(oxc-parser@0.150.0)(postcss@8.5.28)(rolldown@1.2.8)(rollup@4.63.1)(subset-font@2.7.0)(vite@8.3.0)
+        version: https://pkg.pr.new/@nuxt/fonts@35924e7(db0@0.4.1)(esbuild@0.28.2)(ioredis@5.11.1(supports-color@10.2.2))(magic-string@1.4.1)(magicast@0.5.5)(oxc-parser@0.150.0)(postcss@8.5.28)(rolldown@1.2.8)(rollup@4.63.1)(subset-font@2.9.0)(vite@8.3.0)
       airspace:
         specifier: workspace:*
         version: link:..
@@ -380,8 +380,8 @@ importers:
         specifier: 1.5.2
         version: 1.5.2
       subset-font:
-        specifier: 2.7.0
-        version: 2.7.0
+        specifier: 2.9.0
+        version: 2.9.0
 
   examples/astro:
     dependencies:
@@ -2442,8 +2442,8 @@ packages:
     resolution: {integrity: sha512-llZkSzeTsimFx64U+ThT2xQM2uEce8GIQUYvxgbB6ZFvBhV2LP9LeJJb3HT+syG0uCFLsTCHjV9SfC0WNU1vtA==}
     engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
 
-  '@nuxt/cli-nightly@4.0.0-20260918-171422-106af6f':
-    resolution: {integrity: sha512-v7FVguq2MA5Kjtc3z7I2qw/1oTYlqQ86iFTux46C8UD6wee5tMAXlAo7t2XDTV8TlG8ryoSO2bgIckm+dsD0DQ==}
+  '@nuxt/cli-nightly@4.0.0-20260920-121149-6393ba4':
+    resolution: {integrity: sha512-PM7aHTKgmnd6mt1KRC4WNLDnNrG3iuqOeQDQqVbyaqoHu2EFEr+uOpCAz7WQILTmBAPJhuQqoaDxRcNag6/Hzg==}
     engines: {node: ^22.19.0 || ^24.11.0 || >=26.0.0}
     hasBin: true
     peerDependencies:
@@ -6132,8 +6132,8 @@ packages:
     engines: {node: '>=0.4.7'}
     hasBin: true
 
-  harfbuzzjs@0.10.3:
-    resolution: {integrity: sha512-GJnLUrgLMadlMYrBGEXwYEimObbysy3prWT4HyPpFQERvgTU/OZ+ReUlEPOum6w4RBtFXzXiCCmECOr4sz3qwQ==}
+  harfbuzzjs@1.6.1:
+    resolution: {integrity: sha512-+JeJmO+HzXjDwpfCOdGSyM2bNP8WzJNFKl/8TKivbInMYDtfRIuPIDLtnBNmQzcJw6GptbhHY6o5gaH6deCMEw==}
 
   has-symbols@1.1.0:
     resolution: {integrity: sha512-1cDNdwJ2Jaohmb3sg4OmKaMBwuC48sYni5HUw2DvsC8LjGTLK9h+eb1X6RyuOHe4hT0ULCW68iomhjUoKUqlPQ==}
@@ -6989,8 +6989,8 @@ packages:
   murmurhash@2.0.1:
     resolution: {integrity: sha512-5vQEh3y+DG/lMPM0mCGPDnyV8chYg/g7rl6v3Gd8WMF9S429ox3Xk8qrk174kWhG767KQMqqxLD1WnGd77hiew==}
 
-  my-bad@0.2.2:
-    resolution: {integrity: sha512-K2HJ7QFFYZkfFTwAk1wqzBAbk1Na2lKNPg6EwJ2iDYqkyFhYfDrGpIuG+NpwVMxvI0yUoN20SWyTkBATu7PeAQ==}
+  my-bad@0.2.5:
+    resolution: {integrity: sha512-jS1CLPZSsHrzyTDZq+5s+uxG8OIjq5+RIxQHRQPedzX5NjjtYzyCVee22tw/zfN4t403S22fF3+t3wVqk7/c4Q==}
     engines: {node: '>=22.12.0'}
     peerDependencies:
       vite: '>=6'
@@ -8501,8 +8501,8 @@ packages:
     peerDependencies:
       postcss: ^8.5.26
 
-  subset-font@2.7.0:
-    resolution: {integrity: sha512-KoBEshkhodCspvR8DweQFkxRB0OxLmXiWV49y8O5fksD9gf/qBK8gcLwUOlGP4ktm55t2Ot0gLRsVQLT4391QQ==}
+  subset-font@2.9.0:
+    resolution: {integrity: sha512-WJulQeFwbewrXIGcLJbSZFWI44fHW8gNRuPzLywfDL8w38IPRbN1JFxwG76aoohw9kcFdvjVIn2QmID1iy119A==}
 
   super-regex@1.1.0:
     resolution: {integrity: sha512-WHkws2ZflZe41zj6AolvvmaTrWds/VuyeYr9iPVv/oQeaIoVxMKaushfFWpOGDT+GuBrM/sVqF8KUCYQlSSTdQ==}
@@ -11970,7 +11970,7 @@ snapshots:
     dependencies:
       which: 7.0.0
 
-  '@nuxt/cli-nightly@4.0.0-20260918-171422-106af6f(@nuxt/schema-nightly@5.0.0-29830089.dc519522)(jiti@2.7.0)(oxc-parser@0.150.0)(rolldown@1.2.8)(vite@8.3.0)':
+  '@nuxt/cli-nightly@4.0.0-20260920-121149-6393ba4(@nuxt/schema-nightly@5.0.0-29830089.dc519522)(jiti@2.7.0)(oxc-parser@0.150.0)(rolldown@1.2.8)(vite@8.3.0)':
     dependencies:
       '@clack/prompts': 1.8.1
       args-tokenizer: 0.3.0
@@ -11981,7 +11981,7 @@ snapshots:
       exsolve: 1.1.1
       fuzzysort: 4.0.2
       get-port-please: 3.2.0
-      my-bad: 0.2.2(vite@8.3.0)
+      my-bad: 0.2.5(vite@8.3.0)
       obug: 3.0.0
       pathe: 2.0.3
       perfect-debounce: 2.1.0
@@ -12210,14 +12210,14 @@ snapshots:
       - uploadthing
       - vue
 
-  '@nuxt/fonts@https://pkg.pr.new/@nuxt/fonts@35924e7(db0@0.4.1)(esbuild@0.28.2)(ioredis@5.11.1(supports-color@10.2.2))(magic-string@1.4.1)(magicast@0.5.5)(oxc-parser@0.150.0)(postcss@8.5.28)(rolldown@1.2.8)(rollup@4.63.1)(subset-font@2.7.0)(vite@8.3.0)':
+  '@nuxt/fonts@https://pkg.pr.new/@nuxt/fonts@35924e7(db0@0.4.1)(esbuild@0.28.2)(ioredis@5.11.1(supports-color@10.2.2))(magic-string@1.4.1)(magicast@0.5.5)(oxc-parser@0.150.0)(postcss@8.5.28)(rolldown@1.2.8)(rollup@4.63.1)(subset-font@2.9.0)(vite@8.3.0)':
     dependencies:
       '@nuxt/devtools-kit': 3.4.2(magic-string@1.4.1)(magicast@0.5.5)(oxc-parser@0.150.0)(rolldown@1.2.8)(unplugin@3.4.0(esbuild@0.28.2)(rolldown@1.2.8)(rollup@4.63.1)(vite@8.3.0))(vite@8.3.0)
       '@nuxt/kit': 4.5.2(magic-string@1.4.1)(magicast@0.5.5)(oxc-parser@0.150.0)(rolldown@1.2.8)(unplugin@3.4.0(esbuild@0.28.2)(rolldown@1.2.8)(rollup@4.63.1)(vite@8.3.0))
       consola: 3.4.2
       defu: 6.1.7
       exsolve: 1.1.1
-      fontless: 0.4.3(db0@0.4.1)(esbuild@0.28.2)(ioredis@5.11.1(supports-color@10.2.2))(postcss@8.5.28)(rolldown@1.2.8)(rollup@4.63.1)(subset-font@2.7.0)(vite@8.3.0)
+      fontless: 0.4.3(db0@0.4.1)(esbuild@0.28.2)(ioredis@5.11.1(supports-color@10.2.2))(postcss@8.5.28)(rolldown@1.2.8)(rollup@4.63.1)(subset-font@2.9.0)(vite@8.3.0)
       h3: 1.15.11
       magic-regexp: 0.11.0(esbuild@0.28.2)(rolldown@1.2.8)(rollup@4.63.1)(vite@8.3.0)
       nypm: 0.6.10
@@ -12231,7 +12231,7 @@ snapshots:
       unplugin: 3.4.0(esbuild@0.28.2)(rolldown@1.2.8)(rollup@4.63.1)(vite@8.3.0)
       unstorage: 1.17.5(db0@0.4.1)(ioredis@5.11.1(supports-color@10.2.2))
     optionalDependencies:
-      subset-font: 2.7.0
+      subset-font: 2.9.0
     transitivePeerDependencies:
       - '@azure/app-configuration'
       - '@azure/cosmos'
@@ -16217,7 +16217,7 @@ snapshots:
     dependencies:
       tiny-inflate: 1.0.3
 
-  fontless@0.4.3(db0@0.4.1)(esbuild@0.28.2)(ioredis@5.11.1(supports-color@10.2.2))(postcss@8.5.28)(rolldown@1.2.8)(rollup@4.63.1)(subset-font@2.7.0)(vite@8.3.0):
+  fontless@0.4.3(db0@0.4.1)(esbuild@0.28.2)(ioredis@5.11.1(supports-color@10.2.2))(postcss@8.5.28)(rolldown@1.2.8)(rollup@4.63.1)(subset-font@2.9.0)(vite@8.3.0):
     dependencies:
       consola: 3.4.2
       css-tree: 3.2.1
@@ -16233,7 +16233,7 @@ snapshots:
       unifont: 0.8.3
       unstorage: 1.17.5(db0@0.4.1)(ioredis@5.11.1(supports-color@10.2.2))
     optionalDependencies:
-      subset-font: 2.7.0
+      subset-font: 2.9.0
       vite: 8.3.0(@types/node@26.6.2)(@vitejs/devtools@0.7.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1)
     transitivePeerDependencies:
       - '@azure/app-configuration'
@@ -16472,7 +16472,7 @@ snapshots:
     optionalDependencies:
       uglify-js: 3.19.3
 
-  harfbuzzjs@0.10.3: {}
+  harfbuzzjs@1.6.1: {}
 
   has-symbols@1.1.0: {}
 
@@ -17583,7 +17583,7 @@ snapshots:
 
   murmurhash@2.0.1: {}
 
-  my-bad@0.2.2(vite@8.3.0):
+  my-bad@0.2.5(vite@8.3.0):
     dependencies:
       clickable-path: 0.1.1
       errx: 0.2.2
@@ -17949,7 +17949,7 @@ snapshots:
   nuxt-nightly@5.0.0-29830089.dc519522(5ba30360ad77466e9b85e11a7913f92a):
     dependencies:
       '@dxup/nuxt': 0.5.10(esbuild@0.28.2)(magicast@0.5.5)(oxc-parser@0.150.0)(rolldown@1.2.8)(rollup@4.63.1)(vite@8.3.0)
-      '@nuxt/cli': '@nuxt/cli-nightly@4.0.0-20260918-171422-106af6f(@nuxt/schema-nightly@5.0.0-29830089.dc519522)(jiti@2.7.0)(oxc-parser@0.150.0)(rolldown@1.2.8)(vite@8.3.0)'
+      '@nuxt/cli': '@nuxt/cli-nightly@4.0.0-20260920-121149-6393ba4(@nuxt/schema-nightly@5.0.0-29830089.dc519522)(jiti@2.7.0)(oxc-parser@0.150.0)(rolldown@1.2.8)(vite@8.3.0)'
       '@nuxt/devtools': 4.0.0-beta.1(f6245dfe4be491a5562354a799781981)
       '@nuxt/kit': '@nuxt/kit-nightly@5.0.0-29830089.dc519522(@nuxt/schema-nightly@5.0.0-29830089.dc519522)(confbox@0.3.1)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(magic-string@1.4.1)(mlly@1.8.2)(oxc-parser@0.150.0)(rolldown@1.2.8)(unplugin@3.4.0(esbuild@0.28.2)(rolldown@1.2.8)(rollup@4.63.1)(vite@8.3.0))'
       '@nuxt/nitro-server': '@nuxt/nitro-server-nightly@5.0.0-29830089.dc519522(@babel/plugin-syntax-typescript@7.29.7(@babel/core@7.29.7(supports-color@10.2.2)))(@nuxt/schema-nightly@5.0.0-29830089.dc519522)(@oxc-project/types@0.150.0)(acorn@8.18.0)(confbox@0.3.1)(dotenv@17.4.2)(esbuild@0.28.2)(giget@3.3.1)(jiti@2.7.0)(lightningcss@1.33.0)(mlly@1.8.2)(nuxt-nightly@5.0.0-29830089.dc519522)(oxc-parser@0.150.0)(rolldown@1.2.8)(rollup@4.63.1)(typescript@6.0.3)(vite@8.3.0)'
@@ -19647,10 +19647,10 @@ snapshots:
       postcss: 8.5.28
       postcss-selector-parser: 7.1.6
 
-  subset-font@2.7.0:
+  subset-font@2.9.0:
     dependencies:
       fontverter: 2.0.0
-      harfbuzzjs: 0.10.3
+      harfbuzzjs: 1.6.1
       p-limit: 3.1.0
 
   super-regex@1.1.0:
