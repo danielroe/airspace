@@ -49,7 +49,7 @@ importers:
         version: 0.0.0-spaces-alpha-20260910230440(debug@4.4.3)
     devDependencies:
       '@did-plc/server':
-        specifier: ^0.0.1
+        specifier: 0.0.1
         version: 0.0.1(debug@4.4.3)
 
 packages:
