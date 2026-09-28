@@ -100,6 +100,68 @@ describe('clientMetadata', () => {
   })
 })
 
+async function staleSession(concurrent: number) {
+  const did = 'did:plc:o7sgbrqrvs3sjizryttaqml4'
+  const pds = 'https://pds.example'
+  const key = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify'])
+  const dpopJwk = { ...await crypto.subtle.exportKey('jwk', key.privateKey), kid: 'k', alg: 'ES256' }
+  const saved = new Map<string, NodeSavedSession>([[did, {
+    dpopJwk,
+    authMethod: { method: 'none' },
+    tokenSet: { iss: pds, aud: pds, sub: did, scope: 'atproto', access_token: 'old-access', refresh_token: 'old-refresh', token_type: 'DPoP', expires_at: new Date(Date.now() - 1000).toISOString() },
+  } as NodeSavedSession]])
+  const session = { get: async (k: string) => saved.get(k), set: async (k: string, v: NodeSavedSession) => void saved.set(k, v), del: async (k: string) => void saved.delete(k) }
+
+  const refreshes: string[] = []
+  let arrive!: () => void
+  const arrived = new Promise<void>((resolve) => {
+    arrive = resolve
+  })
+  vi.stubGlobal('fetch', (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const request = new Request(input, init)
+    const url = new URL(request.url)
+    if (url.host === 'plc.directory') {
+      return Response.json({ id: did, alsoKnownAs: ['at://alice.test'], service: [{ id: '#atproto_pds', type: 'AtprotoPersonalDataServer', serviceEndpoint: pds }] })
+    }
+    if (url.pathname === '/.well-known/oauth-protected-resource') {
+      return Response.json({ resource: pds, authorization_servers: [pds] })
+    }
+    if (url.pathname === '/.well-known/oauth-authorization-server') {
+      return Response.json({
+        issuer: pds,
+        authorization_endpoint: `${pds}/oauth/authorize`,
+        token_endpoint: `${pds}/oauth/token`,
+        pushed_authorization_request_endpoint: `${pds}/oauth/par`,
+        require_pushed_authorization_requests: true,
+        response_types_supported: ['code'],
+        grant_types_supported: ['authorization_code', 'refresh_token'],
+        code_challenge_methods_supported: ['S256'],
+        token_endpoint_auth_methods_supported: ['none', 'private_key_jwt'],
+        token_endpoint_auth_signing_alg_values_supported: ['ES256'],
+        dpop_signing_alg_values_supported: ['ES256'],
+        scopes_supported: ['atproto'],
+        authorization_response_iss_parameter_supported: true,
+        client_id_metadata_document_supported: true,
+      })
+    }
+    if (url.pathname === '/oauth/token') {
+      const token = new URLSearchParams(await request.text()).get('refresh_token')!
+      const nth = refreshes.push(token)
+      if (nth === concurrent)
+        arrive()
+      await arrived
+      if (nth > 1) {
+        return Response.json({ error: 'invalid_grant', error_description: 'refresh token replayed' }, { status: 400 })
+      }
+      return Response.json({ access_token: 'new-access', refresh_token: 'new-refresh', token_type: 'DPoP', scope: 'atproto', sub: did, expires_in: 3600 })
+    }
+    return Response.json({ error: 'not found' }, { status: 404 })
+  }) as typeof fetch)
+
+  const options = { baseUrl: 'https://roe.dev', redirectPath: '/cb', name: 'test', scopes: ['atproto'], stores: { session } }
+  return { did, options, refreshes, saved }
+}
+
 describe('createOAuth', () => {
   let fetchedHosts: string[] = []
   beforeEach(() => {
@@ -159,65 +221,17 @@ describe('createOAuth', () => {
     expect(fetchedHosts).toEqual(['localhost:2583', 'localhost:2582'])
   })
 
+  it('refreshes once when clients in one process restore a stale session concurrently', async () => {
+    const { did, options, refreshes, saved } = await staleSession(1)
+    const [a, b] = await Promise.all([createOAuth(options), createOAuth(options)])
+    await Promise.all([a.restore(did), b.restore(did)])
+
+    expect(refreshes).toEqual(['old-refresh'])
+    expect(saved.get(did)?.tokenSet.refresh_token).toBe('new-refresh')
+  })
+
   it('keeps the session when another instance wins a refresh race', async () => {
-    const did = 'did:plc:o7sgbrqrvs3sjizryttaqml4'
-    const pds = 'https://pds.example'
-    const key = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify'])
-    const dpopJwk = { ...await crypto.subtle.exportKey('jwk', key.privateKey), kid: 'k', alg: 'ES256' }
-    const saved = new Map<string, NodeSavedSession>([[did, {
-      dpopJwk,
-      authMethod: { method: 'none' },
-      tokenSet: { iss: pds, aud: pds, sub: did, scope: 'atproto', access_token: 'old-access', refresh_token: 'old-refresh', token_type: 'DPoP', expires_at: new Date(Date.now() - 1000).toISOString() },
-    } as NodeSavedSession]])
-    const session = { get: async (k: string) => saved.get(k), set: async (k: string, v: NodeSavedSession) => void saved.set(k, v), del: async (k: string) => void saved.delete(k) }
-
-    const refreshes: string[] = []
-    let arrive!: () => void
-    const bothArrived = new Promise<void>((resolve) => {
-      arrive = resolve
-    })
-    vi.stubGlobal('fetch', (async (input: RequestInfo | URL, init?: RequestInit) => {
-      const request = new Request(input, init)
-      const url = new URL(request.url)
-      if (url.host === 'plc.directory') {
-        return Response.json({ id: did, alsoKnownAs: ['at://alice.test'], service: [{ id: '#atproto_pds', type: 'AtprotoPersonalDataServer', serviceEndpoint: pds }] })
-      }
-      if (url.pathname === '/.well-known/oauth-protected-resource') {
-        return Response.json({ resource: pds, authorization_servers: [pds] })
-      }
-      if (url.pathname === '/.well-known/oauth-authorization-server') {
-        return Response.json({
-          issuer: pds,
-          authorization_endpoint: `${pds}/oauth/authorize`,
-          token_endpoint: `${pds}/oauth/token`,
-          pushed_authorization_request_endpoint: `${pds}/oauth/par`,
-          require_pushed_authorization_requests: true,
-          response_types_supported: ['code'],
-          grant_types_supported: ['authorization_code', 'refresh_token'],
-          code_challenge_methods_supported: ['S256'],
-          token_endpoint_auth_methods_supported: ['none', 'private_key_jwt'],
-          token_endpoint_auth_signing_alg_values_supported: ['ES256'],
-          dpop_signing_alg_values_supported: ['ES256'],
-          scopes_supported: ['atproto'],
-          authorization_response_iss_parameter_supported: true,
-          client_id_metadata_document_supported: true,
-        })
-      }
-      if (url.pathname === '/oauth/token') {
-        const token = new URLSearchParams(await request.text()).get('refresh_token')!
-        const nth = refreshes.push(token)
-        if (nth === 2)
-          arrive()
-        await bothArrived
-        if (nth > 1) {
-          return Response.json({ error: 'invalid_grant', error_description: 'refresh token replayed' }, { status: 400 })
-        }
-        return Response.json({ access_token: 'new-access', refresh_token: 'new-refresh', token_type: 'DPoP', scope: 'atproto', sub: did, expires_in: 3600 })
-      }
-      return Response.json({ error: 'not found' }, { status: 404 })
-    }) as typeof fetch)
-
-    const options = { baseUrl: 'https://roe.dev', redirectPath: '/cb', name: 'test', scopes: ['atproto'], stores: { session } }
+    const { did, options, refreshes, saved } = await staleSession(2)
     const a = await createOAuth(options)
     vi.resetModules()
     const b = await createOAuth(options)
