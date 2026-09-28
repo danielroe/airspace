@@ -1,12 +1,12 @@
-import type { Client } from '@atproto/lex-client'
 import type { LexMap } from '@atproto/lex-data'
 import type { DidString } from '@atproto/lex-schema'
+import type { Xrpc } from './xrpc.ts'
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { XrpcResponseError } from '@atproto/lex-client'
 import { AirspaceError } from './errors.ts'
 import { toLexiconJson } from './lexicon.ts'
+import { isXrpcError } from './xrpc.ts'
 
 const LEXICON_COLLECTION = 'com.atproto.lexicon.schema'
 
@@ -83,7 +83,7 @@ export interface PublishStep {
 }
 
 export interface PublishPlanOptions {
-  client: Client
+  client: Xrpc
   did: DidString
   lexicons: readonly LexiconFile[]
   /** Also delete published schemas under these authorities that have no local file. */
@@ -131,10 +131,10 @@ export async function publishLexicons(options: PublishOptions): Promise<PublishS
     switch (step.action) {
       case 'create':
       case 'update':
-        await options.client.putRecord(step.record!, step.nsid, { repo: options.did, validate: false })
+        await options.client.procedure('com.atproto.repo.putRecord', { repo: options.did, collection: LEXICON_COLLECTION, rkey: step.nsid, record: step.record, validate: false })
         break
       case 'delete':
-        await options.client.deleteRecord(LEXICON_COLLECTION, step.nsid, { repo: options.did })
+        await options.client.procedure('com.atproto.repo.deleteRecord', { repo: options.did, collection: LEXICON_COLLECTION, rkey: step.nsid })
         break
     }
   }
@@ -153,24 +153,24 @@ export function lexiconDnsRecords(nsids: readonly string[], did: DidString): Dns
   return authorities.map(a => ({ name: `_lexicon.${authorityDomain(a)}`, type: 'TXT', value: `did=${did}` }))
 }
 
-async function getPublished(client: Client, did: DidString, nsid: string): Promise<unknown> {
+async function getPublished(client: Xrpc, did: DidString, nsid: string): Promise<unknown> {
   try {
-    const res = await client.getRecord(LEXICON_COLLECTION, nsid, { repo: did })
-    return res.body.value
+    const res = await client.query<{ value: unknown }>('com.atproto.repo.getRecord', { repo: did, collection: LEXICON_COLLECTION, rkey: nsid })
+    return res.value
   }
   catch (err) {
-    if (err instanceof XrpcResponseError && (err.status === 404 || err.error === 'RecordNotFound'))
+    if (isXrpcError(err) && (err.status === 404 || err.error === 'RecordNotFound'))
       return undefined
     throw err
   }
 }
 
-async function* listPublished(client: Client, did: DidString): AsyncGenerator<string> {
+async function* listPublished(client: Xrpc, did: DidString): AsyncGenerator<string> {
   let cursor: string | undefined
   do {
-    const res = await client.listRecords(LEXICON_COLLECTION, { repo: did, limit: 100, cursor })
-    for (const record of res.body.records) yield record.uri.slice(record.uri.lastIndexOf('/') + 1)
-    cursor = res.body.cursor
+    const res = await client.query<{ records: { uri: string }[], cursor?: string }>('com.atproto.repo.listRecords', { collection: LEXICON_COLLECTION, repo: did, limit: 100, cursor })
+    for (const record of res.records) yield record.uri.slice(record.uri.lastIndexOf('/') + 1)
+    cursor = res.cursor
   } while (cursor)
 }
 

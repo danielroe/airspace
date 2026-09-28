@@ -1,6 +1,5 @@
 {
   "ignore": [
-    "src/lex/**",
     "test/fixtures/live/**",
     "demo-pds/**"
   ],

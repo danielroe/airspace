@@ -1,12 +1,13 @@
+import type { Xrpc } from './xrpc.ts'
 import { existsSync } from 'node:fs'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import process from 'node:process'
 import { parseArgs } from 'node:util'
-import { Client } from '@atproto/lex-client'
 import { resolveIdentity } from './identity.ts'
 import { authorityDomain, lexiconDnsRecords, loadLexicons, ownedLexicons, publishLexicons } from './publish.ts'
 import { passwordSession } from './session.ts'
+import { createXrpc } from './xrpc.ts'
 
 const HELP = `airspace <command>
 
@@ -94,9 +95,9 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
     return 1
   }
 
-  let client: Client
+  let client: Xrpc
   if (values['dry-run']) {
-    client = new Client(identity.service)
+    client = createXrpc(identity.service)
   }
   else {
     const password = process.env.AIRSPACE_APP_PASSWORD
@@ -105,7 +106,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
       return 1
     }
     const session = await passwordSession({ service: identity.service, identifier: identity.did, password })
-    client = new Client(session)
+    client = createXrpc(session)
   }
 
   process.stdout.write(`${identity.handle ?? identity.did} (${identity.did}) @ ${identity.service}\n\n`)

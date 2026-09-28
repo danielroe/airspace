@@ -93,3 +93,15 @@ export function routeIdentityTo(pds: TestPds): void {
     return real(input, init)
   }) as typeof fetch)
 }
+
+/** A real login for each session library `createAirspace({ session })` accepts. */
+export const sessionKinds = {
+  '@atproto/lex-password-session': async (service: string, account: { handle: string, password: string }) => {
+    const { PasswordSession } = await import('@atproto/lex-password-session')
+    return await PasswordSession.login({ service, identifier: account.handle, password: account.password })
+  },
+  '@atcute/password-session': async (service: string, account: { handle: string, password: string }) => {
+    const { PasswordSession } = await import('@atcute/password-session')
+    return await PasswordSession.login({ service, identifier: account.handle, password: account.password })
+  },
+}

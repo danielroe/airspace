@@ -26,11 +26,11 @@ Minified and gzipped, measured by `pnpm size`. Lazy chunks load only when spaces
 
 | Import | airspace only | with runtime deps |
 | --- | --- | --- |
-| `airspace` | 10.4 kB (+5.7 kB lazy) | 37.5 kB (+10.7 kB lazy) |
+| `airspace` | 11.2 kB (+1.8 kB lazy) | 19.7 kB (+8.9 kB lazy) |
 | `airspace/lexicon` | 3.6 kB | 23.0 kB |
 | `airspace/live` | 0.7 kB | 0.7 kB |
-| `airspace/oauth` | 1.2 kB | 1.2 kB |
-| `airspace/oauth/browser` | 1.2 kB | 1.2 kB |
+| `airspace/oauth` | 1.3 kB | 1.3 kB |
+| `airspace/oauth/browser` | 1.3 kB | 1.3 kB |
 | `airspace/oauth/metadata` | 0.4 kB | 0.4 kB |
 | `airspace/plugins/markdown` | 0.3 kB | 0.3 kB |
 | `airspace/plugins/timestamps` | 0.2 kB | 0.2 kB |

@@ -70,7 +70,6 @@ The [demo on getair.space](https://getair.space/demo) is the same app, running a
 - Install dependencies with `pnpm install`
 - Run the tests with `pnpm dev`. They run against a real PDS with permissioned spaces, booted in process with `@atproto/dev-env`
 - Run `pnpm dev:pds` for a PDS on port 2583 that stays up, printing dotenv-shaped credentials for two accounts
-- Run `pnpm lex:build` to regenerate `src/lex` from `lexicons/`
 - Run `pnpm size` to print the bundle size table in the docs
 
 ## credits

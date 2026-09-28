@@ -1,54 +1,55 @@
-import type { Client } from '@atproto/lex-client'
+import type { LexMap } from '@atproto/lex-data'
+import type { JsonValue } from '@atproto/lex-json'
 import type { DidString, RecordSchema } from '@atproto/lex-schema'
 import type { Backend, RawRecord, SpaceUri, WriteRef } from './backend.ts'
 import type { Space } from './model.ts'
-import { XrpcResponseError } from '@atproto/lex-client'
+import type { Xrpc } from './xrpc.ts'
+import { jsonToLex, lexToJson } from '@atproto/lex-json'
 import { LexValidationError } from '@atproto/lex-schema'
 import { isNotFound, PAGE, paginate, readOnly, scoped, spaceUri } from './backend.ts'
 import { cidFromBlob } from './blob.ts'
 import { SpacesUnsupportedError, ValidationError } from './errors.ts'
-import { com } from './lex/index.ts'
+import { isXrpcError, wrapXrpc } from './xrpc.ts'
 
 /** A client that reports a failing space call as `SpacesUnsupportedError` when the PDS has no spaces. */
-export function guardSpaces(client: Client, service: string, supported: () => Promise<boolean>): Client {
-  return new Proxy(client, {
-    get(target, property, receiver) {
-      const value = Reflect.get(target, property, receiver)
-      if (property !== 'call' || typeof value !== 'function')
-        return value
-      return async (...args: Parameters<Client['call']>) => {
-        try {
-          return await (value as Client['call']).apply(target, args)
-        }
-        catch (err) {
-          // A refused credential says nothing about space support; `AuthMissing` on an authenticated call means no route.
-          const auth = err instanceof XrpcResponseError && (err.status === 403 || (err.status === 401 && err.error !== 'AuthMissing'))
-          if (err instanceof XrpcResponseError && !auth && !await supported())
-            throw new SpacesUnsupportedError(service, { cause: err })
-          throw err
-        }
-      }
-    },
+export function guardSpaces(client: Xrpc, service: string, supported: () => Promise<boolean>): Xrpc {
+  return wrapXrpc(client, async (call) => {
+    try {
+      return await call()
+    }
+    catch (err) {
+      // A refused credential says nothing about space support; `AuthMissing` on an authenticated call means no route.
+      const auth = isXrpcError(err) && (err.status === 403 || (err.status === 401 && err.error !== 'AuthMissing'))
+      if (isXrpcError(err) && !auth && !await supported())
+        throw new SpacesUnsupportedError(service, { cause: err })
+      throw err
+    }
   })
 }
+
+const DEFS = 'com.atproto.simplespace.defs'
+
+interface SpaceRecord { collection: string, rkey: string, cid: string, value?: JsonValue }
+
+const encode = (schema: RecordSchema, value: LexMap | undefined): JsonValue | undefined => value && lexToJson({ ...value, $type: schema.$type })
 
 export interface SpaceBackendOptions {
   space: SpaceUri
   repo: DidString
   service: string
-  client?: Client
+  client?: Xrpc
 }
 
 // The PDS cannot validate third-party lexicons in spaces (atproto#5433).
 export function createSpaceBackend({ space, repo, service, client }: SpaceBackendOptions): Backend {
-  const require = (): Client => {
+  const require = (): Xrpc => {
     if (!client)
       throw readOnly('use spaces')
     return client
   }
   const parse = (schema: RecordSchema, raw: RawRecord): RawRecord => {
     try {
-      return { uri: raw.uri, cid: raw.cid, value: schema.parse(raw.value) }
+      return { uri: raw.uri, cid: raw.cid, value: schema.parse(jsonToLex(raw.value as JsonValue)) }
     }
     catch (err) {
       if (err instanceof LexValidationError)
@@ -58,11 +59,11 @@ export function createSpaceBackend({ space, repo, service, client }: SpaceBacken
   }
 
   const page: Backend['page'] = async (schema, { limit, cursor, reverse, unvalidated } = {}) => {
-    const res = await scoped(() => require().call(com.atproto.space.listRecords, { space, repo, collection: schema.$type, limit: limit ?? PAGE, cursor, reverse }))
+    const res = await scoped(() => require().query<{ records: SpaceRecord[], cursor?: string }>('com.atproto.space.listRecords', { space, repo, collection: schema.$type, limit: limit ?? PAGE, cursor, reverse }))
     return {
       records: res.records.filter(r => r.value).map((r) => {
         const raw = { uri: `${space}/${repo}/${r.collection}/${r.rkey}`, cid: r.cid, value: r.value }
-        return unvalidated ? raw : parse(schema, raw)
+        return unvalidated ? { ...raw, value: jsonToLex(r.value!) } : parse(schema, raw)
       }),
       cursor: res.cursor,
     }
@@ -79,8 +80,8 @@ export function createSpaceBackend({ space, repo, service, client }: SpaceBacken
     },
     async get(schema, rkey) {
       try {
-        const res = await scoped(() => require().call(com.atproto.space.getRecord, { space, repo, collection: schema.$type, rkey }))
-        return parse(schema, res as RawRecord)
+        const res = await scoped(() => require().query<RawRecord>('com.atproto.space.getRecord', { space, repo, collection: schema.$type, rkey }))
+        return parse(schema, res)
       }
       catch (err) {
         if (isNotFound(err))
@@ -91,22 +92,24 @@ export function createSpaceBackend({ space, repo, service, client }: SpaceBacken
     page,
     list: (schema, { limit, unvalidated } = {}) => paginate(page, schema, limit, unvalidated),
     async create(schema, record, rkey): Promise<WriteRef> {
-      return await scoped(() => require().call(com.atproto.space.createRecord, { space, repo, collection: schema.$type, rkey, record }))
+      return await scoped(() => require().procedure<WriteRef>('com.atproto.space.createRecord', { space, repo, collection: schema.$type, rkey, record: encode(schema, record) }))
     },
     async put(schema, rkey, record): Promise<WriteRef> {
-      return await scoped(() => require().call(com.atproto.space.putRecord, { space, repo, collection: schema.$type, rkey, record }))
+      return await scoped(() => require().procedure<WriteRef>('com.atproto.space.putRecord', { space, repo, collection: schema.$type, rkey, record: encode(schema, record) }))
     },
     async delete(schema, rkey) {
-      await scoped(() => require().call(com.atproto.space.deleteRecord, { space, repo, collection: schema.$type, rkey }))
+      await scoped(() => require().procedure('com.atproto.space.deleteRecord', { space, repo, collection: schema.$type, rkey }))
     },
     async batch(writes) {
-      const res = await scoped(() => require().call(com.atproto.space.applyWrites, {
+      const res = await scoped(() => require().procedure<{ results?: ({ uri: string, cid: string } | object)[] }>('com.atproto.space.applyWrites', {
         space,
         repo,
-        writes: writes.map(({ operation, schema, rkey, value }) => {
-          const op = { collection: schema.$type, rkey, value } as any
-          return operation === 'create' ? com.atproto.space.applyWrites.create.build(op) : operation === 'put' ? com.atproto.space.applyWrites.update.build(op) : com.atproto.space.applyWrites.delete.build(op)
-        }),
+        writes: writes.map(({ operation, schema, rkey, value }) => ({
+          $type: `com.atproto.space.applyWrites#${operation === 'put' ? 'update' : operation}`,
+          collection: schema.$type,
+          rkey,
+          ...(value ? { value: encode(schema, value) } : {}),
+        })),
       }))
       return (res.results ?? []).map(result => 'uri' in result ? { uri: result.uri, cid: result.cid } : undefined)
     },
@@ -138,32 +141,39 @@ export interface SpaceMember {
 
 export type SpaceMemberAccess = Partial<Omit<SpaceMember, 'did'>>
 
-function policyToLex(policy: SpacePolicy) {
+function policyToLex(policy: SpacePolicy): { $type: string, managingApp?: string } {
   return policy === 'public'
-    ? com.atproto.simplespace.defs.publicPolicy.build({})
+    ? { $type: `${DEFS}#publicPolicy` }
     : policy === 'member-list'
-      ? com.atproto.simplespace.defs.memberListPolicy.build({})
-      : com.atproto.simplespace.defs.managingAppPolicy.build({ managingApp: policy.managingApp })
+      ? { $type: `${DEFS}#memberListPolicy` }
+      : { $type: `${DEFS}#managingAppPolicy`, managingApp: policy.managingApp }
 }
 
-function appAccessToLex(access: SpaceAppAccess) {
+function appAccessToLex(access: SpaceAppAccess): { $type: string, allowed?: string[] } {
   return access === 'open'
-    ? com.atproto.simplespace.defs.open.build({})
-    : com.atproto.simplespace.defs.allowList.build({ allowed: [...access.allowed] })
+    ? { $type: `${DEFS}#open` }
+    : { $type: `${DEFS}#allowList`, allowed: [...access.allowed] }
 }
 
 function policyFromLex(value: { $type?: string, managingApp?: string }): SpacePolicy {
-  if (com.atproto.simplespace.defs.publicPolicy.isTypeOf(value))
+  if (value.$type === `${DEFS}#publicPolicy`)
     return 'public'
-  if (com.atproto.simplespace.defs.managingAppPolicy.isTypeOf(value))
+  if (value.$type === `${DEFS}#managingAppPolicy`)
     return { managingApp: value.managingApp! }
   return 'member-list'
 }
 
 function appAccessFromLex(value: { $type?: string, allowed?: string[] }): SpaceAppAccess {
-  if (com.atproto.simplespace.defs.allowList.isTypeOf(value))
+  if (value.$type === `${DEFS}#allowList`)
     return { allowed: value.allowed! }
   return 'open'
+}
+
+interface SpaceView {
+  uri: string
+  readPolicy: { $type?: string, managingApp?: string }
+  writePolicy: { $type?: string, managingApp?: string }
+  appAccess: { $type?: string, allowed?: string[] }
 }
 
 export interface SpaceManager {
@@ -191,9 +201,9 @@ export interface SpaceManager {
 }
 
 /** `com.atproto.simplespace` management for a space anchored on the session's DID. */
-export function createSpaceManager(space: Space, authority: DidString, client: Client | undefined): SpaceManager {
+export function createSpaceManager(space: Space, authority: DidString, client: Xrpc | undefined): SpaceManager {
   const uri = spaceUri(authority, space.type, space.skey)
-  const require = (): Client => {
+  const require = (): Xrpc => {
     if (!client)
       throw readOnly('manage spaces')
     return client
@@ -201,11 +211,11 @@ export function createSpaceManager(space: Space, authority: DidString, client: C
 
   async function info(): Promise<SpaceInfo | null> {
     try {
-      const res = await require().call(com.atproto.simplespace.getSpace, { space: uri })
+      const res = await require().query<SpaceView>('com.atproto.simplespace.getSpace', { space: uri })
       return { uri: res.uri, read: policyFromLex(res.readPolicy), write: policyFromLex(res.writePolicy), appAccess: appAccessFromLex(res.appAccess) }
     }
     catch (err) {
-      if (err instanceof XrpcResponseError && err.error === 'SpaceNotFound')
+      if (isXrpcError(err) && err.error === 'SpaceNotFound')
         return null
       throw err
     }
@@ -214,7 +224,7 @@ export function createSpaceManager(space: Space, authority: DidString, client: C
   async function exists(): Promise<boolean> {
     let cursor: string | undefined
     do {
-      const res = await require().call(com.atproto.space.listSpaces, { type: space.type, did: authority, limit: PAGE, cursor })
+      const res = await require().query<{ spaces: { uri: string }[], cursor?: string }>('com.atproto.space.listSpaces', { type: space.type, did: authority, limit: PAGE, cursor })
       if (res.spaces.some(view => view.uri === uri))
         return true
       cursor = res.cursor
@@ -232,7 +242,7 @@ export function createSpaceManager(space: Space, authority: DidString, client: C
       const read = options.read ?? 'member-list'
       const write = options.write ?? 'member-list'
       const appAccess = options.appAccess ?? 'open'
-      const res = await require().call(com.atproto.simplespace.createSpace, {
+      const res = await require().procedure<{ uri: string }>('com.atproto.simplespace.createSpace', {
         type: space.type,
         skey: space.skey,
         readPolicy: policyToLex(read),
@@ -242,7 +252,7 @@ export function createSpaceManager(space: Space, authority: DidString, client: C
       return { uri: res.uri, read, write, appAccess }
     },
     async update(options) {
-      await require().call(com.atproto.simplespace.updateSpace, {
+      await require().procedure('com.atproto.simplespace.updateSpace', {
         space: uri,
         readPolicy: options.read ? policyToLex(options.read) : undefined,
         writePolicy: options.write ? policyToLex(options.write) : undefined,
@@ -250,24 +260,24 @@ export function createSpaceManager(space: Space, authority: DidString, client: C
       })
     },
     async delete() {
-      await require().call(com.atproto.simplespace.deleteSpace, { space: uri })
+      await require().procedure('com.atproto.simplespace.deleteSpace', { space: uri })
     },
     members: {
       async list() {
         const out: SpaceMember[] = []
         let cursor: string | undefined
         do {
-          const res = await require().call(com.atproto.simplespace.listMembers, { space: uri, limit: PAGE, cursor })
+          const res = await require().query<{ members: SpaceMember[], cursor?: string }>('com.atproto.simplespace.listMembers', { space: uri, limit: PAGE, cursor })
           out.push(...res.members.map(m => ({ did: m.did, read: m.read, write: m.write })))
           cursor = res.cursor
         } while (cursor)
         return out
       },
       async add(did, access = {}) {
-        await require().call(com.atproto.simplespace.putMember, { space: uri, did, read: access.read ?? true, write: access.write ?? true })
+        await require().procedure('com.atproto.simplespace.putMember', { space: uri, did, read: access.read ?? true, write: access.write ?? true })
       },
       async remove(did) {
-        await require().call(com.atproto.simplespace.removeMember, { space: uri, did })
+        await require().procedure('com.atproto.simplespace.removeMember', { space: uri, did })
       },
     },
   }
