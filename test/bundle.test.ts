@@ -38,7 +38,7 @@ describe('bundle boundaries', () => {
     expect(eager).toMatch(/import\(["']image-meta["']\)/)
   })
 
-  it('keeps the vendored com.atproto.space lexicons out of the eager chunks', async () => {
+  it('keeps the space XRPC calls out of the eager chunks', async () => {
     const { eager, lazy } = await chunks(app)
     expect(eager).not.toContain('com.atproto.simplespace')
     expect(eager).not.toContain('com.atproto.space.getRecord')
@@ -47,13 +47,13 @@ describe('bundle boundaries', () => {
 
   it('loads the password session helper lazily', async () => {
     const { eager } = await chunks(`export { passwordSession } from './src/index.ts'`)
-    expect(eager).not.toMatch(/from\s*["']@atproto\/lex-password-session["']/)
-    expect(eager).toMatch(/import\(["']@atproto\/lex-password-session["']\)/)
+    expect(eager).not.toMatch(/from\s*["']@atcute\/password-session["']/)
+    expect(eager).toMatch(/import\(["']@atcute\/password-session["']\)/)
   })
 
   it('keeps the lexicon DSL free of the client', async () => {
     const { eager } = await chunks(`export { defineLexicons, l } from './src/lexicon.ts'`)
-    expect(eager).not.toContain('@atproto/lex-client')
+    expect(eager).not.toContain('@atcute/client')
     expect(eager).not.toContain('com.atproto.space.getRecord')
   })
 

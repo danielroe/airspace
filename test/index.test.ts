@@ -5,7 +5,7 @@ import { AirspaceError, belongsTo, cidFromBlob, ConflictError, createAirspace, d
 import { bookmark, location, note, noteV2, photo, project, projectCategory } from './fixtures/lex.ts'
 import friendly from './fixtures/lexicons.ts'
 import { PNG_3X2 } from './fixtures/png.ts'
-import { countCalls, routeIdentityTo, startTestPds, stubXrpcError } from './pds.ts'
+import { countCalls, routeIdentityTo, sessionKinds, startTestPds, stubXrpcError } from './pds.ts'
 
 type Project = Plain<Infer<typeof project>>
 type ProjectCategory = Plain<Infer<typeof projectCategory>>
@@ -87,6 +87,25 @@ describe('passwordSession', () => {
     const airspace = createAirspace({ identity: { did: account.did, service: pds.service }, collections: { notes }, session })
     const written = await airspace.notes.create({ body: 'From an app password' })
     expect((await airspace.notes.get(written.rkey))?.value.body).toBe('From an app password')
+  })
+})
+
+describe.each(Object.entries(sessionKinds))('a session from %s', (_name, login) => {
+  it('reads, writes, batches and uploads', async () => {
+    const account = await pds.account()
+    const session = await login(pds.service, account)
+    const airspace = createAirspace({ identity: { did: account.did, service: pds.service }, collections: { notes }, session })
+    const written = await airspace.notes.create({ body: 'one' })
+    await airspace.notes.put(written.rkey, { body: 'two' })
+    expect((await airspace.notes.get(written.rkey))?.value.body).toBe('two')
+    await airspace.batch((b) => {
+      b.notes.create({ body: 'three' })
+    })
+    expect((await airspace.notes.list()).map(n => n.value.body).sort()).toEqual(['three', 'two'])
+    const uploaded = await airspace.blobs.upload(PNG_3X2, { mimeType: 'image/png' })
+    expect(uploaded.aspectRatio).toEqual({ width: 3, height: 2 })
+    await airspace.notes.delete(written.rkey)
+    expect(await airspace.notes.get(written.rkey)).toBeNull()
   })
 })
 

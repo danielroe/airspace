@@ -5,7 +5,6 @@ export default antfu({
     'PROPOSAL.md',
     'demo-pds/fly.toml',
     '.github/workflows/*.yml',
-    'src/lex/**',
     'test/fixtures/live/**',
     'examples/*/lex/**',
     'examples/*/lexicons/**',

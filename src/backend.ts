@@ -1,10 +1,12 @@
-import type { Client } from '@atproto/lex-client'
 import type { LexMap } from '@atproto/lex-data'
+import type { JsonValue } from '@atproto/lex-json'
 import type { DidString, RecordSchema } from '@atproto/lex-schema'
-import { XrpcResponseError } from '@atproto/lex-client'
+import type { Xrpc } from './xrpc.ts'
+import { jsonToLex, lexToJson } from '@atproto/lex-json'
 import { blobUrl, cidFromBlob } from './blob.ts'
 import { AirspaceError, ConflictError, ScopeError } from './errors.ts'
 import { isDid, isHandle } from './identity.ts'
+import { isXrpcError, wrapXrpc, xrpcMessage } from './xrpc.ts'
 
 export interface RawRecord {
   uri: string
@@ -56,7 +58,7 @@ export interface Backend {
 }
 
 export function isNotFound(err: unknown): boolean {
-  return err instanceof XrpcResponseError && (err.status === 404 || err.error === 'RecordNotFound')
+  return isXrpcError(err) && (err.status === 404 || err.error === 'RecordNotFound')
 }
 
 /** A grant minted before a collection joined the model fails with a 403 naming the scope. */
@@ -65,23 +67,14 @@ export async function scoped<T>(call: () => Promise<T>): Promise<T> {
     return await call()
   }
   catch (err) {
-    const scope = err instanceof XrpcResponseError && err.status === 403 ? /Missing required scope "([^"]+)"/.exec(err.message)?.[1] : undefined
+    const scope = isXrpcError(err) && err.status === 403 ? /Missing required scope "([^"]+)"/.exec(xrpcMessage(err))?.[1] : undefined
     throw scope ? new ScopeError(scope, { cause: err }) : err
   }
 }
 
 /** `scoped` applied to every call a client makes. */
-export function scopedClient<T extends Client | undefined>(client: T): T {
-  if (!client)
-    return client
-  return new Proxy(client, {
-    get(target, property, receiver) {
-      const value = Reflect.get(target, property, receiver)
-      if (property !== 'call' || typeof value !== 'function')
-        return value
-      return (...args: Parameters<Client['call']>) => scoped(() => (value as Client['call']).apply(target, args))
-    },
-  }) as T
+export function scopedClient<T extends Xrpc | undefined>(client: T): T {
+  return (client && wrapXrpc(client, scoped)) as T
 }
 
 /** Turn the PDS's `InvalidSwap` into a typed conflict naming what was written. */
@@ -90,7 +83,7 @@ async function swapping<T>(schema: RecordSchema, rkey: string, ifMatch: string |
     return await scoped(write)
   }
   catch (err) {
-    if (ifMatch && err instanceof XrpcResponseError && err.error === 'InvalidSwap')
+    if (ifMatch && isXrpcError(err) && err.error === 'InvalidSwap')
       throw new ConflictError(schema.$type, rkey, ifMatch, { cause: err })
     throw err
   }
@@ -197,9 +190,9 @@ export function repoShapedRefs(value: LexMap, space: SpaceUri, repo: DidString):
  * whichever PDS does and reports the failure of that hop.
  */
 function repoElsewhere(err: unknown): boolean {
-  if (!(err instanceof XrpcResponseError))
+  if (!isXrpcError(err))
     return false
-  return err.error === 'UpstreamFailure' || (err.error === 'InvalidRequest' && /could not find repo/i.test(err.message))
+  return err.error === 'UpstreamFailure' || (err.error === 'InvalidRequest' && /could not find repo/i.test(xrpcMessage(err)))
 }
 
 /** Reads from `primary`, falling back to `elsewhere()` once the PDS answers that it does not host the repo. */
@@ -250,21 +243,43 @@ export function withRepoFallback(primary: Backend, elsewhere: () => Promise<Back
 export interface PublicBackendOptions {
   repo: DidString
   service: string
-  read: Client
-  write?: Client
+  read: Xrpc
+  write?: Xrpc
 }
 
-// `RecordKeyOptions<S>` does not resolve for a generic `S`, hence the casts; callers see concrete types.
+const literalKey = (schema: RecordSchema): string | undefined => schema.key.startsWith('literal:') ? schema.key.slice('literal:'.length) : undefined
+
+function requireKey(schema: RecordSchema, rkey: string | undefined): string {
+  const key = rkey ?? literalKey(schema)
+  if (key === undefined)
+    throw new TypeError(`An "rkey" must be provided for record key type "${schema.key}" (${schema.$type})`)
+  schema.keySchema.parse(key)
+  return key
+}
+
+const encode = (schema: RecordSchema, value: LexMap): JsonValue => lexToJson({ ...value, $type: schema.$type })
+
+interface JsonRecord { uri: string, cid?: string, value: JsonValue }
+
 export function createPublicBackend({ repo, service, read, write }: PublicBackendOptions): Backend {
-  const requireWrite = (): Client => {
+  const requireWrite = (): Xrpc => {
     if (!write)
       throw readOnly()
     return write
   }
   const page: Backend['page'] = async (schema, { limit = PAGE, cursor, reverse, unvalidated } = {}) => {
-    const res = await read.list(schema, { repo, limit, cursor, reverse })
+    const res = await read.query<{ records: JsonRecord[], cursor?: string }>('com.atproto.repo.listRecords', { repo, collection: schema.$type, limit, cursor, reverse })
+    const records: RawRecord[] = []
+    for (const record of res.records) {
+      const value = jsonToLex(record.value)
+      const result = schema.safeValidate(value)
+      if (result.success)
+        records.push({ uri: record.uri, cid: record.cid ?? '', value: result.value })
+      else if (unvalidated)
+        records.push({ uri: record.uri, cid: record.cid ?? '', value })
+    }
     // `listRecords` hands back a cursor even on a short final page, so an absent cursor means the last page.
-    return { records: unvalidated ? res.records : res.records.filter(item => item.valid), cursor: res.records.length < limit ? undefined : res.cursor }
+    return { records, cursor: res.records.length < limit ? undefined : res.cursor }
   }
   return {
     repo,
@@ -275,8 +290,8 @@ export function createPublicBackend({ repo, service, read, write }: PublicBacken
     },
     async get(schema, rkey) {
       try {
-        const res = await read.get(schema, { repo, rkey } as any)
-        return { uri: res.uri, cid: res.cid ?? '', value: res.value }
+        const res = await read.query<JsonRecord>('com.atproto.repo.getRecord', { repo, collection: schema.$type, rkey: requireKey(schema, rkey) })
+        return { uri: res.uri, cid: res.cid ?? '', value: schema.validate(jsonToLex(res.value)) }
       }
       catch (err) {
         if (isNotFound(err))
@@ -287,23 +302,26 @@ export function createPublicBackend({ repo, service, read, write }: PublicBacken
     page,
     list: (schema, { limit, unvalidated } = {}) => paginate(page, schema, limit, unvalidated),
     async create(schema, value, rkey) {
-      return await scoped(() => requireWrite().create(schema, value as any, { repo, rkey } as any))
+      const key = rkey ?? literalKey(schema)
+      if (key !== undefined)
+        schema.keySchema.parse(key)
+      return await scoped(() => requireWrite().procedure<WriteRef>('com.atproto.repo.createRecord', { repo, collection: schema.$type, rkey: key, record: encode(schema, value) }))
     },
     async put(schema, rkey, value, ifMatch) {
-      return await swapping(schema, rkey, ifMatch, () => requireWrite().put(schema, value as any, { repo, rkey, swapRecord: ifMatch } as any))
+      return await swapping(schema, rkey, ifMatch, () => requireWrite().procedure<WriteRef>('com.atproto.repo.putRecord', { repo, collection: schema.$type, rkey: requireKey(schema, rkey), record: encode(schema, value), swapRecord: ifMatch }))
     },
     async delete(schema, rkey, ifMatch) {
-      await swapping(schema, rkey, ifMatch, () => requireWrite().delete(schema, { repo, rkey, swapRecord: ifMatch } as any))
+      await swapping(schema, rkey, ifMatch, () => requireWrite().procedure('com.atproto.repo.deleteRecord', { repo, collection: schema.$type, rkey: requireKey(schema, rkey), swapRecord: ifMatch }))
     },
     async batch(writes) {
       const ops = writes.map(({ operation, schema, rkey, value }) => ({
         $type: `com.atproto.repo.applyWrites#${operation === 'put' ? 'update' : operation}`,
         collection: schema.$type,
         rkey,
-        value,
+        ...(value ? { value: encode(schema, value) } : {}),
       }))
-      const res = await scoped(() => requireWrite().applyWrites(() => ops as any, { repo }))
-      return (res.body.results ?? []).map(result => 'uri' in result ? { uri: result.uri, cid: result.cid } : undefined)
+      const res = await scoped(() => requireWrite().procedure<{ results?: ({ uri: string, cid: string } | object)[] }>('com.atproto.repo.applyWrites', { repo, writes: ops }))
+      return (res.results ?? []).map(result => 'uri' in result ? { uri: result.uri, cid: result.cid } : undefined)
     },
   }
 }

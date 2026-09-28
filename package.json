@@ -92,7 +92,6 @@
     "test:versions": "installed-check -d --no-workspaces",
     "test:types": "tsc --noEmit",
     "test:build": "tsdown",
-    "lex:build": "node scripts/build-lex.ts",
     "size": "node scripts/size.ts",
     "dev:pds": "node test/pds-serve.mjs"
   },
@@ -113,10 +112,10 @@
     }
   },
   "dependencies": {
-    "@atproto/lex-client": "^0.3.5",
+    "@atcute/client": "^5.1.2",
+    "@atcute/password-session": "^1.0.2",
     "@atproto/lex-data": "^0.1.7",
     "@atproto/lex-json": "^0.1.6",
-    "@atproto/lex-password-session": "^0.2.2",
     "@atproto/lex-schema": "^0.2.6",
     "image-meta": "^0.3.0"
   },
@@ -126,6 +125,7 @@
     "@atproto/dev-env": "0.0.0-spaces-alpha-20260910230440",
     "@atproto/lex": "0.3.12",
     "@atproto/lex-document": "0.1.12",
+    "@atproto/lex-password-session": "0.2.3",
     "@atproto/oauth-client-browser": "0.5.7",
     "@atproto/oauth-client-node": "0.5.7",
     "@types/node": "26.6.3",
