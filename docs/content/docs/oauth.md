@@ -21,6 +21,17 @@ Then wire up three things:
 2. Redirect the user to `await oauth.authorize(handle)`.
 3. On return, read the session with `await oauth.callback(params)` and pass it to `createAirspace({ session })`.
 
+Refresh tokens are single-use. If your server runs as several instances, pass `requestLock` so only one of them refreshes a given session at a time:
+
+```ts
+const oauth = await createOAuth({
+  // ...
+  requestLock: (name, fn) => redisLock(name, fn),
+})
+```
+
+Without one, a single-instance server is still safe and can ignore the `No lock mechanism provided` warning.
+
 File scopes match the types your blob fields accept, so a model that only accepts `image/*` asks for `blob:image/*`, not `blob:*/*`.
 
 ## asking for part of the scopes
