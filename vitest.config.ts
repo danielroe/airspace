@@ -12,6 +12,7 @@ export default defineConfig({
         test: {
           name: 'airspace',
           include: ['test/**/*.test.ts'],
+          server: { deps: { inline: [/@atproto\/oauth-client/] } },
         },
       },
       {
