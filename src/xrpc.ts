@@ -10,7 +10,7 @@ export interface AtprotoAgent {
 /** A service to call, with optional default headers and `fetch`. */
 export interface ServiceOptions {
   service: string | URL
-  headers?: HeadersInit
+  headers?: RequestInit['headers']
   fetch?: typeof globalThis.fetch
 }
 
