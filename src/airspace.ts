@@ -1,4 +1,3 @@
-import type { Agent, AgentOptions } from '@atproto/lex-client'
 import type { LexMap } from '@atproto/lex-data'
 import type { JsonValue } from '@atproto/lex-json'
 import type { AtUriString, CidString, DidString, RecordSchema } from '@atproto/lex-schema'
@@ -12,7 +11,7 @@ import type { AnyCollection, AnySpace, SpaceCollections } from './model.ts'
 import type { AnyPlugin, MergeMeta, UnionToIntersection } from './plugin.ts'
 import type { SpaceManager } from './space.ts'
 import type { AirspaceRecord, Identity, UnknownRecord } from './types.ts'
-import { Client } from '@atproto/lex-client'
+import type { SessionInput, Xrpc } from './xrpc.ts'
 import { jsonToLex, lexToJson } from '@atproto/lex-json'
 import { createPublicBackend, parseAtUri, readOnly, repoShapedRefs, scopedClient, spaceUri, withRepoFallback } from './backend.ts'
 import { createBatch } from './batch.ts'
@@ -22,6 +21,7 @@ import { resolveImage } from './community.ts'
 import { AirspaceError } from './errors.ts'
 import { isDid, resolveIdentity } from './identity.ts'
 import { stub } from './type-model.ts'
+import { createXrpc } from './xrpc.ts'
 
 /** The part of an [unstorage](https://unstorage.unjs.io) driver a cache needs. */
 export interface CacheStorage {
@@ -57,8 +57,8 @@ export interface AirspaceOptions<C extends Record<string, AnyCollection>, S exte
   spaces?: S & NotReserved<S, keyof AirspaceBase<any, any, any> | keyof C>
   /** Run on every collection, before its own plugins. */
   plugins?: P
-  /** An OAuth or password session, or anything `new Client()` accepts. Required for writes and for spaces. */
-  session?: Agent | AgentOptions
+  /** An `@atproto` or `@atcute` OAuth or password session, a fetch handler, or `{ service, headers?, fetch? }`. Required for writes and for spaces. */
+  session?: SessionInput
   /** Cache reads in memory. Off by default; identical in-flight requests are always shared. */
   cache?: CacheOptions
   /** Let any resolved identity live on a loopback, private or `http:` address. A `service` given directly in `identity` is never checked. */
@@ -127,7 +127,7 @@ export type Airspace<C extends Record<string, AnyCollection>, S extends Record<s
 
 interface Runtime {
   identity: Identity
-  session?: Client
+  session?: Xrpc
   public: Backend
 }
 
@@ -137,8 +137,7 @@ interface Repo {
   extra?: Partial<ClientContext>
 }
 
-// `fetch` is read per request so a dispatcher installed after construction is honoured.
-const publicClient = (service: string): Client => new Client({ service, fetch: (input, init) => fetch(input, init) })
+const publicClient = (service: string): Xrpc => createXrpc({ service })
 
 function once<T>(load: () => Promise<T>): () => Promise<T> {
   let pending: Promise<T> | undefined
@@ -164,7 +163,7 @@ export function createAirspace<
 
   const runtime = once(async (): Promise<Runtime> => {
     const identity = await resolveIdentity(options.identity, network)
-    const session = options.session ? new Client(options.session) : undefined
+    const session = options.session ? createXrpc(options.session) : undefined
     const backend = createPublicBackend({ repo: identity.did, service: identity.service, read: publicClient(identity.service), write: session })
     keyOf.set(backend, 'public')
     return { identity, session, public: backend }
@@ -200,7 +199,7 @@ export function createAirspace<
     return pending
   }
 
-  const spaceClient = async (): Promise<Client | undefined> => {
+  const spaceClient = async (): Promise<Xrpc | undefined> => {
     const [rt, lib] = await Promise.all([runtime(), spaceLib()])
     return rt.session && lib.guardSpaces(rt.session, rt.identity.service, spacesSupported)
   }

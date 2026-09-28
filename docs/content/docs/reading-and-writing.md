@@ -15,7 +15,7 @@ export const airspace = createAirspace({
   identity: 'roe.dev', // or { did, service } for a handle that can't be looked up
   collections: { location },
   spaces: { workspace }, // brings its own `projects` and `categories` with it
-  session, // omit for read-only; an OAuth session goes in the same slot
+  session, // omit for read-only; an `@atproto` or `@atcute` OAuth session goes in the same slot
 })
 
 const featured = await airspace.projects.list({ with: ['category'], limit: 5 })

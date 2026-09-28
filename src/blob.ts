@@ -1,7 +1,6 @@
-import type { Client } from '@atproto/lex-client'
 import type { BlobRef } from '@atproto/lex-data'
 import type { DidString, Plain } from './types.ts'
-import { lexToJson } from '@atproto/lex-json'
+import type { Xrpc } from './xrpc.ts'
 import { AirspaceError } from './errors.ts'
 
 /** CID from a blob ref in any encoding: lex, IPLD-JSON (`$link`), DAG-JSON (`/`) or legacy `{ cid }`. */
@@ -57,16 +56,15 @@ async function toBytes(input: BlobInput): Promise<Uint8Array> {
 }
 
 /** Upload to the PDS. */
-export async function uploadBlob(client: Client, input: BlobInput, options: UploadBlobOptions = {}): Promise<UploadedBlob> {
+export async function uploadBlob(client: Xrpc, input: BlobInput, options: UploadBlobOptions = {}): Promise<UploadedBlob> {
   const bytes = await toBytes(input)
   const mimeType = options.mimeType ?? ((input instanceof Blob && input.type) || 'application/octet-stream')
   if (options.maxBytes !== undefined && bytes.byteLength > options.maxBytes) {
     throw new AirspaceError(`blob is ${bytes.byteLength} bytes, over the ${options.maxBytes} byte limit`)
   }
-  const res = await client.uploadBlob(bytes, { encoding: mimeType as `${string}/${string}` })
-  const blob = res.body.blob
+  const { blob } = await client.uploadBlob(bytes, mimeType)
   return {
-    blob: lexToJson(blob) as Plain<BlobRef>,
+    blob: blob as Plain<BlobRef>,
     cid: cidFromBlob(blob)!,
     mimeType,
     size: bytes.byteLength,

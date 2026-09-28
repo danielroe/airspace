@@ -3,10 +3,10 @@ import type { TestPds } from './pds.ts'
 import { l as lex } from '@atproto/lex-schema'
 import { afterAll, afterEach, beforeAll, describe, expect, expectTypeOf, it, vi } from 'vitest'
 import { belongsTo, ConflictError, createAirspace, defineCollection, defineSpace, parseAtUri, ScopeError, SpacesUnsupportedError, ValidationError } from '../src/index.ts'
-import { com } from '../src/lex/index.ts'
 import { spacesSupported } from '../src/supported.ts'
+import { createXrpc } from '../src/xrpc.ts'
 import { workspace as declaration, location, project, projectCategory, projectCategoryV2 } from './fixtures/lex.ts'
-import { countCalls, hideSpaces, startTestPds, stubXrpcError } from './pds.ts'
+import { countCalls, hideSpaces, sessionKinds, startTestPds, stubXrpcError } from './pds.ts'
 
 type Project = Plain<Infer<typeof project>>
 
@@ -201,7 +201,7 @@ describe('space client', () => {
     await expect(airspace.workspace.projects.create({ name: 'broken' })).rejects.toThrow()
     expect(await airspace.workspace.projects.list()).toEqual([])
 
-    const res = await account.raw.call(com.atproto.space.putRecord, {
+    const res = await createXrpc(account.session).procedure('com.atproto.space.putRecord', {
       space: await airspace.workspace.uri(),
       repo: account.did,
       collection: 'dev.example.project',
@@ -438,6 +438,19 @@ describe('space reads', () => {
     const reader = createAirspace({ identity, spaces: { drafts: defineSpace(declaration, { collections: { notes: strict } }) }, session: account.session })
     await expect(reader.drafts.notes.list()).rejects.toThrow(ValidationError)
     await expect(reader.drafts.notes.list()).rejects.toThrow(/dev\.example\.note\//)
+  })
+})
+
+describe.each(Object.entries(sessionKinds))('a session from %s', (_name, login) => {
+  it('manages a space and writes to it', async () => {
+    const account = await pds.account()
+    const session = await login(pds.service, account)
+    const airspace = createAirspace({ identity: { did: account.did, service: pds.service }, spaces: { workspace }, session })
+    await airspace.workspace.manage.ensure()
+    expect(await airspace.workspace.manage.exists()).toBe(true)
+    const written = await airspace.workspace.categories.create({ name: 'a', createdAt: now() })
+    expect((await airspace.workspace.categories.get(written.rkey))?.value.name).toBe('a')
+    await airspace.workspace.manage.delete()
   })
 })
 

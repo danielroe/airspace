@@ -6,6 +6,7 @@ import { join } from 'node:path'
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { lexiconDnsRecords, loadLexicons, ownedLexicons, planLexiconPublish, publishLexicons } from '../src/publish.ts'
+import { createXrpc } from '../src/xrpc.ts'
 import { startTestPds } from './pds.ts'
 
 const post = { lexicon: 1, id: 'dev.example.post', defs: { main: { type: 'record', key: 'tid', record: { type: 'object', properties: {} } } } }
@@ -52,8 +53,9 @@ afterAll(() => pds.close())
 
 describe('publishLexicons', () => {
   it('plans create / unchanged / update / delete and applies them', async () => {
-    const { did, raw: client } = await pds.account()
-    const published = async () => (await client.listRecords('com.atproto.lexicon.schema', { repo: did })).body.records
+    const { did, raw, session } = await pds.account()
+    const client = createXrpc(session)
+    const published = async () => (await raw.listRecords('com.atproto.lexicon.schema', { repo: did })).body.records
     const lexicons = ownedLexicons(await loadLexicons(await fixtureDir()), ['dev.example'])
 
     const first = await publishLexicons({ client, did, lexicons })
@@ -90,8 +92,9 @@ describe('publishLexicons', () => {
   })
 
   it('never prunes schemas outside the owned authorities', async () => {
-    const { did, raw: client } = await pds.account()
-    await client.putRecord({ $type: 'com.atproto.lexicon.schema', ...shared } as any, 'community.lexicon.app.defs', { repo: did, validate: false })
+    const { did, raw, session } = await pds.account()
+    const client = createXrpc(session)
+    await raw.putRecord({ $type: 'com.atproto.lexicon.schema', ...shared } as any, 'community.lexicon.app.defs', { repo: did, validate: false })
     const steps = await planLexiconPublish({ client, did, lexicons: [], prune: ['dev.example'] })
     expect(steps).toEqual([])
   })
