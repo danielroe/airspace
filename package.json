@@ -118,7 +118,7 @@
     "@atproto/lex-json": "^0.1.6",
     "@atproto/lex-password-session": "^0.2.2",
     "@atproto/lex-schema": "^0.2.6",
-    "image-meta": "^0.2.2"
+    "image-meta": "^0.3.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "9.5.1",
@@ -128,7 +128,7 @@
     "@atproto/lex-document": "0.1.11",
     "@atproto/oauth-client-browser": "0.5.7",
     "@atproto/oauth-client-node": "0.5.7",
-    "@types/node": "26.6.2",
+    "@types/node": "26.6.3",
     "@types/ws": "8.18.1",
     "@vitest/coverage-v8": "5.0.1",
     "comark": "0.7.0",
@@ -143,7 +143,7 @@
     "tsdown": "0.23.0",
     "typescript": "6.0.3",
     "vitest": "5.0.1",
-    "ws": "8.21.3"
+    "ws": "8.22.0"
   },
   "simple-git-hooks": {
     "pre-commit": "pnpm nano-staged"
