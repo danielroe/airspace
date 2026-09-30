@@ -68,6 +68,7 @@ describe('toCommit', () => {
     })
     expect(toCommit(commit({ operation: 'delete', record: undefined }))?.record).toBeUndefined()
     expect(toCommit(JSON.stringify({ did: 'did:plc:a', kind: 'identity' }))).toBeUndefined()
+    expect(toCommit('not json')).toBeUndefined()
     expect(toCommit(JSON.stringify({ did: 'did:plc:a', kind: 'commit', commit: { operation: 'create' } }))).toBeUndefined()
   })
 })

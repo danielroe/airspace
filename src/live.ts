@@ -52,7 +52,17 @@ interface JetstreamMessage {
 
 /** A commit, or `undefined` for anything that is not one. Exported for the same reason as `subscribeUrl`. */
 export function toCommit(data: string): Commit | undefined {
-  const message = JSON.parse(data) as JetstreamMessage
+  let message: JetstreamMessage
+  try {
+    message = JSON.parse(data) as JetstreamMessage
+  }
+  catch {
+    return undefined
+  }
+  return readCommit(message)
+}
+
+function readCommit(message: JetstreamMessage): Commit | undefined {
   const commit = message.commit
   if (message.kind !== 'commit' || !commit?.collection || !commit.rkey || !message.did)
     return undefined
@@ -97,7 +107,7 @@ export function subscribe(options: SubscribeOptions): () => void {
     }
     socket.onmessage = (event: MessageEvent) => {
       try {
-        const commit = toCommit(String(event.data))
+        const commit = readCommit(JSON.parse(String(event.data)) as JetstreamMessage)
         if (!commit)
           return
         // Jetstream's cursor is inclusive, so resuming from the last `timeUs` redelivers that commit.
