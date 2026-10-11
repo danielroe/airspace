@@ -10,7 +10,7 @@
     },
     "packageManager": {
       "name": "pnpm",
-      "version": "11.24.0",
+      "version": "11.28.5",
       "onFail": "download"
     }
   },
@@ -128,8 +128,8 @@
     "@atproto/lex-document": "0.1.12",
     "@atproto/oauth-client-browser": "0.5.7",
     "@atproto/oauth-client-node": "0.5.7",
-    "@types/node": "26.6.3",
-    "@types/ws": "8.18.1",
+    "@types/node": "26.6.5",
+    "@types/ws": "8.18.2",
     "@vitest/coverage-v8": "5.0.1",
     "comark": "0.7.0",
     "esbuild": "0.28.2",
@@ -137,7 +137,7 @@
     "installed-check": "11.0.0",
     "knip": "6.38.0",
     "nano-staged": "1.0.2",
-    "pkg-pr-new": "0.0.88",
+    "pkg-pr-new": "0.0.91",
     "publint": "0.3.24",
     "simple-git-hooks": "2.14.0",
     "tsdown": "0.23.0",
