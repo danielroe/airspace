@@ -4,7 +4,7 @@ import { createAirspace, passwordSession } from 'airspace'
 import { timestamps } from 'airspace/plugins/timestamps'
 import { useSession } from 'nitro/h3'
 import { useRuntimeConfig } from 'nitro/runtime-config'
-import { createError, toNuxtRequestEvent } from 'nuxt/server'
+import { createError } from 'nuxt/server'
 import { profile, workspace } from '#shared/collections'
 
 export interface DemoAccount {
@@ -13,18 +13,20 @@ export interface DemoAccount {
   password: string
 }
 
-const cookie = () => ({
-  password: useRuntimeConfig().sessionPassword,
-  name: 'airspace-demo',
-  cookie: { secure: !import.meta.dev },
-})
+function cookie() {
+  return {
+    password: useRuntimeConfig().sessionPassword,
+    name: 'airspace-demo',
+    cookie: { secure: !import.meta.dev },
+  }
+}
 
 const ttl = 15 * 60_000
 const limit = 100
 const instances = new Map<string, { at: number, instance: Promise<DemoInstance> }>()
 const grants = new Map<string, { at: number, account: DemoAccount }>()
 
-export const demoSession = (event: RequestEvent) => useSession<Partial<DemoAccount>>(toNuxtRequestEvent(event), cookie())
+export const demoSession = (event: RequestEvent) => useSession<Partial<DemoAccount>>(event, cookie())
 
 export async function requireAccount(event: RequestEvent): Promise<DemoAccount> {
   const { data } = await demoSession(event)
