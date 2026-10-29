@@ -10,7 +10,7 @@
     },
     "packageManager": {
       "name": "pnpm",
-      "version": "12.14.0",
+      "version": "12.16.1",
       "onFail": "download"
     }
   },
@@ -99,7 +99,7 @@
   "peerDependencies": {
     "@atproto/oauth-client-browser": "^0.5.0",
     "@atproto/oauth-client-node": "^0.5.0",
-    "comark": "^0.6.0 || ^0.7.0"
+    "comark": "^0.6.0 || ^0.7.0 || ^0.8.0"
   },
   "peerDependenciesMeta": {
     "@atproto/oauth-client-browser": {
@@ -128,19 +128,19 @@
     "@atproto/lex-document": "0.1.14",
     "@atproto/oauth-client-browser": "0.5.10",
     "@atproto/oauth-client-node": "0.5.10",
-    "@types/node": "26.6.5",
+    "@types/node": "26.6.6",
     "@types/ws": "8.18.2",
     "@vitest/coverage-v8": "5.0.5",
-    "comark": "0.7.0",
+    "comark": "0.8.1",
     "esbuild": "0.28.2",
     "eslint": "10.13.0",
     "installed-check": "11.0.0",
     "knip": "6.42.1",
     "nano-staged": "1.0.2",
-    "pkg-pr-new": "0.0.91",
+    "pkg-pr-new": "0.0.92",
     "publint": "0.3.25",
     "simple-git-hooks": "2.14.0",
-    "tsdown": "0.23.1",
+    "tsdown": "0.23.3",
     "typescript": "6.0.3",
     "vitest": "5.0.5",
     "ws": "8.22.0"
