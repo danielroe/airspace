@@ -11,10 +11,10 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@comark/vue": "^0.7.0",
+    "@comark/vue": "^0.8.0",
     "@nuxt/fonts": "https://pkg.pr.new/@nuxt/fonts@35924e7",
     "airspace": "workspace:*",
-    "comark": "^0.7.0",
+    "comark": "^0.8.0",
     "nitro": "3.0.260903-beta",
     "nuxt": "npm:nuxt-nightly@5x",
     "ofetch": "2.0.0-alpha.3",
