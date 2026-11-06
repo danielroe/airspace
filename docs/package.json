@@ -22,7 +22,7 @@
     "vue": "^3.5.0"
   },
   "devDependencies": {
-    "pagefind": "1.5.2",
+    "pagefind": "1.6.0",
     "subset-font": "2.9.0"
   }
 }
