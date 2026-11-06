@@ -10,7 +10,7 @@
     },
     "packageManager": {
       "name": "pnpm",
-      "version": "12.16.1",
+      "version": "12.18.0",
       "onFail": "download"
     }
   },
@@ -137,13 +137,13 @@
     "installed-check": "11.0.0",
     "knip": "6.42.1",
     "nano-staged": "1.0.2",
-    "pkg-pr-new": "0.0.92",
+    "pkg-pr-new": "0.0.93",
     "publint": "0.3.25",
     "simple-git-hooks": "2.14.0",
-    "tsdown": "0.23.3",
+    "tsdown": "0.23.5",
     "typescript": "6.0.3",
     "vitest": "5.0.5",
-    "ws": "8.22.0"
+    "ws": "8.22.1"
   },
   "simple-git-hooks": {
     "pre-commit": "pnpm nano-staged"
