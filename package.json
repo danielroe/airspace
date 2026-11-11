@@ -130,7 +130,7 @@
     "@atproto/oauth-client-node": "0.5.13",
     "@types/node": "26.6.6",
     "@types/ws": "8.18.2",
-    "@vitest/coverage-v8": "5.0.5",
+    "@vitest/coverage-v8": "5.1.0",
     "comark": "0.8.1",
     "esbuild": "0.28.2",
     "eslint": "10.13.0",
@@ -142,7 +142,7 @@
     "simple-git-hooks": "2.14.0",
     "tsdown": "0.23.3",
     "typescript": "6.0.3",
-    "vitest": "5.0.5",
+    "vitest": "5.1.0",
     "ws": "8.22.0"
   },
   "simple-git-hooks": {
